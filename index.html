@@ -37,6 +37,7 @@
   <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
   <link rel="stylesheet" href="./static/css/index.css">
+  <link rel="stylesheet" href="./static/bootstrap.min.css">
   <link rel="icon" href="./static/images/icon_1.png">
 
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
@@ -67,27 +68,7 @@
       <span aria-hidden="true"></span>
     </a>
   </div>
-  <div class="navbar-menu">
-    <div class="navbar-start" style="flex-grow: 1; justify-content: center;">
-      <a class="navbar-item" href="https://ruihangao.com/">
-      <span class="icon">
-          <i class="fas fa-home"></i>
-      </span>
-      </a>
 
-      <div class="navbar-item has-dropdown is-hoverable">
-        <a class="navbar-link">
-          More Projects
-        </a>
-        <div class="navbar-dropdown">
-          <a class="navbar-item" href="https://ruihangao.com/publications/">
-            Texture Classification
-          </a>
-        </div>
-      </div>
-    </div>
-
-  </div>
 </nav>
 
 <!-- Title -->
@@ -107,20 +88,36 @@
           <!-- authors -->
           <div class="is-size-5 publication-authors">
             <span class="author-block">
-              <a href="https://ruihangao.com/">Ruihan Gao</a>,</span>
+              <a href="https://ruihangao.github.io/">Ruihan Gao</a>
+              <sup style="padding-right: 25px;">1</sup>
+            </span>
             <span class="author-block">
-            <a href="https://ruihangao.com/">Kangle Deng</a>,</span>
+              <a href="https://dunbar12138.github.io/">Kangle Deng</a>
+              <sup style="padding-right: 25px;">1</sup>
+            </span>
             <span class="author-block">
-                <a href="https://ruihangao.com/">Gengshan Yang</a>,</span>
+                <a href="https://gengshan-y.github.io/">Gengshan Yang</a>
+                <sup style="padding-right: 25px;">1</sup>
+            </span>
             <span class="author-block">
-              <a href="http://robotouch.ri.cmu.edu/yuanwz/">Wenzhen Yuan</a>,</span>
-            <!-- TODO: change Wenzhen's affliation  -->
+              <a href="https://siebelschool.illinois.edu/about/people/all-faculty/yuanwz">Wenzhen Yuan</a>
+              <sup style="padding-right: 25px;">2</sup>
+            </span>
+
             <span class="author-block">
               <a href="https://www.cs.cmu.edu/~junyanz/">Jun-Yan Zhu</a>
+              <sup style="padding-right: 25px;">1</sup>
             </span>
           </div>
           <div class="is-size-5 publication-authors">
-            <span class="author-block">Carnegie Mellon University</span>
+            <span class="author-block">
+              <sup>1</sup>
+              Carnegie Mellon University
+            </span>
+            <span class="author-block">
+              <sup>2</sup>
+              University of Illinois Urbana-Champaign
+            </span>
           </div>
           
           <!-- Button for different release formats -->
@@ -128,7 +125,8 @@
             <div class="publication-links">
               <!-- Arxiv Link. -->
               <span class="link-block">
-                <a href="https://arxiv.org/abs/2305.03051"
+                <!-- TODO: update the href link -->
+                <a href="https://github.com/RuihanGao/TactileDreamFusion"
                    class="external-link button is-normal is-rounded is-dark">
                   <span class="icon">
                       <i class="ai ai-arxiv"></i>
@@ -136,47 +134,38 @@
                   <span>arXiv</span>
                 </a>
               </span>
-              <!-- Video Link. -->
-              <!-- TODO: change to your own video link, e.g. https://www.youtube.com/watch?v=MrKrnHhk8IA -->
-              <!--
-              <span class="link-block">
-                <a href="https://www.youtube.com"
-                   class="external-link button is-normal is-rounded is-dark">
-                  <span class="icon">
-                      <i class="fab fa-youtube"></i>
-                  </span>
-                  <span>Video</span>
-                </a>
-              </span>
-              -->
               <!-- Code Link. -->
               <span class="link-block">
-                <a href="https://github.com/RuihanGao/visual-tactile-synthesis"
+                <!-- TODO: update the href link -->
+                <a href="https://github.com/RuihanGao/TactileDreamFusion"
                    class="external-link button is-normal is-rounded is-dark">
                   <span class="icon">
                       <i class="fab fa-github"></i>
                   </span>
-                  <span>Code</span>
+                  <span>Code (coming soon)</span>
                   </a>
               </span>
               <!-- Dataset Link. -->
               <span class="link-block">
-                <a href="https://drive.google.com/file/d/1VlgYpDSxQP70sYpFERHuzKnTNIH4Gf4s/view?usp=share_link"
+                <!-- TODO: update the href link -->
+                <a href="https://github.com/RuihanGao/TactileDreamFusion"
                    class="external-link button is-normal is-rounded is-dark">
                   <span class="icon">
                       <i class="far fa-images"></i>
                   </span>
-                  <span>Data</span>
+                  <span>Data (coming soon)</span>
                   </a>
               </span>
               <!-- Bibtex Link -->
               <span class="link-block">
-                <a href="https://visual-tactile-synthesis.github.io/#bibtex"
+                <!-- TODO: update the href link -->
+                <a href="https://github.com/RuihanGao/TactileDreamFusion"
                   class="external-link button is-normal is-rounded is-dark">
                   <span class="icon">
-                    <i class="ai ai-obp"></i>
+                    <svg style="width:18px;height:18px;margin-left:0px;margin-right:0px" width="18px" height="18px" viewBox="0 0 44 44"><path fill="currentColor" d="M10,26h8a2,2,0,0,0,2-2V14a2,2,0,0,0-2-2H10a2,2,0,0,0-2,2V24A2,2,0,0,0,10,26Zm0-12h8V24H10Zm15,4H35a1,1,0,0,0,0-2H25a1,1,0,0,0,0,2Zm0-4h6a1,1,0,0,0,0-2H25a1,1,0,0,0,0,2Zm0,8h4a1,1,0,0,0,0-2H25a1,1,0,0,0,0,2ZM42,2H24a2,2,0,0,0-4,0H2A2,2,0,0,0,0,4V6A2,2,0,0,0,2,8V32a2,2,0,0,0,2,2H21v2.59l-5.71,5.71a1,1,0,1,0,1.41,1.41L22,38.41l5.29,5.29a1,1,0,1,0,1.41-1.41L23,36.59V34H40a2,2,0,0,0,2-2V8a2,2,0,0,0,2-2V4A2,2,0,0,0,42,2ZM40,32H4V8H40ZM42,6H2V4H42ZM25,26H35a1,1,0,0,0,0-2H25a1,1,0,0,0,0,2Z"></path>
+                    </svg>
                   </span>
-                  <span>BibTex</span>
+                  <span>Slides</span>
                 </a>
               </span>
             </div>
@@ -190,17 +179,399 @@
 </section>
 
 
+<!-- Teaser video and text -->
+<!-- <section class="hero teaser"> -->
+  <h2 class="subtitle has-text-justified">
+    <b>3D content creation with touch: </b> 
+    Our method <span class="method-title">TactileDreamFusion</span> integrates high-resolution tactile sensing with diffusion-based image priors to enhance fine geometric details for text- or image-to-3D generation. The following results are rendered using Blender, with full-color rendering on the top and normal rendering at the bottom.
+  </h2>
+  <div class="container" style="max-width: 1400px;">
+    <div class="row" style="display: flex; align-items: center;">
+        <div class="col-md-3" style="text-align: center; font-weight: bold; border-right: 1px solid #000;">
+            <p>Text to 3D</p>
+        </div>
+        <div class="col-md-9" style="text-align: center; font-weight: bold;">
+            <p>Our Results</p>
+        </div>
+    </div>
+
+    <div class="row" style="display: flex; align-items: center;">
+        <div class="col-md-3" style="border-right: 1px solid #000;">
+            <video autoplay="autoplay" controls="controls" loop="loop" muted="muted"
+                                        src="static/videos/teaser/an_avocado_2_mesh_vstack.mp4"
+                                        style="width: 100%" type="video/mp4"></video>
+        </div>
+        <div class="col-md-3">
+            <video autoplay="autoplay" controls="controls" loop="loop" muted="muted"
+                                        src="static/videos/teaser/an_avocado_2_avocado_ours_TSDS_vstack.mp4"
+                                        style="width: 100%" type="video/mp4"></video>
+        </div>
+        <div class="col-md-3">
+            <video autoplay="autoplay" controls="controls" loop="loop" muted="muted"
+                                        src="static/videos/teaser/a_mug_1_avocado_ours_TSDS_vstack.mp4"
+                                        style="width: 100%" type="video/mp4"></video>
+        </div>
+        <div class="col-md-3">
+            <video autoplay="autoplay" controls="controls" loop="loop" muted="muted"
+                                        src="static/videos/teaser/a_phone_case_avocado_ours_TSDS_vstack.mp4"
+                                        style="width: 100%" type="video/mp4"></video>
+        </div>
+    </div>
+
+    <div class="row" style="display: flex; align-items: center;">
+        <div class="col-md-3" style="border-right: 1px solid #000;">
+            <p style="font-family: Chalkduster; font-size: 16px; margin-top: 5px; text-align: center;">
+                "An avocado"
+            </p>
+        </div>
+        <div class="col-md-3">
+            <p style="font-family: Chalkduster; font-size: 16px; margin-top: 5px; text-align: center;">
+                "An avocado"
+            </p>
+        </div>
+        <div class="col-md-3">
+            <p style="font-family: Chalkduster; font-size: 16px; margin-top: 5px; text-align: center;">
+                "A mug"
+            </p>
+        </div>
+        <div class="col-md-3">
+            <p style="font-family: Chalkduster; font-size: 16px; margin-top: 5px; text-align: center;">
+                "A phone case"
+            </p>
+        </div>
+    </div>
+
+    <div class="row" style="display: flex; align-items: center;">
+        <div class="col-md-3" style="text-align: center; font-weight: bold;">
+        </div>
+        <div class="col-md-9">
+            <p style="font-family: Chalkduster; font-size: 16px; margin-top: 5px; text-align: center;">"... with avocado texture"</p>
+        </div>
+    </div>
+
+    <div class="row" style="display: flex; align-items: center;">
+        <div class="col-md-3" style="border-right: 1px solid #000;">
+            <video autoplay="autoplay" controls="controls" loop="loop" muted="muted"
+                                        src="static/videos/teaser/a_beanie_1_mesh_vstack.mp4"
+                                        style="width: 100%" type="video/mp4"></video>
+        </div>
+        <div class="col-md-3">
+            <video autoplay="autoplay" controls="controls" loop="loop" muted="muted"
+                                        src="static/videos/teaser/a_beanie_1_GreenSweater_ours_TSDS_vstack.mp4"
+                                        style="width: 100%" type="video/mp4"></video>
+        </div>
+        <div class="col-md-3">
+            <video autoplay="autoplay" controls="controls" loop="loop" muted="muted"
+                                        src="static/videos/teaser/a_toy_flower_2_GreenSweater_ours_TSDS_vstack.mp4"
+                                        style="width: 100%" type="video/mp4"></video>
+        </div>
+        <div class="col-md-3">
+            <video autoplay="autoplay" controls="controls" loop="loop" muted="muted"
+                                        src="static/videos/teaser/a_miffy_bunny_GreenSweater_ours_TSDS_vstack.mp4"
+                                        style="width: 100%" type="video/mp4"></video>
+        </div>
+    </div>
+
+    <div class="row" style="display: flex; align-items: center;">
+        <div class="col-md-3" style="border-right: 1px solid #000;">
+            <p style="font-family: Chalkduster; font-size: 16px; margin-top: 5px; text-align: center;">
+                "A beanie"
+            </p>
+        </div>
+        <div class="col-md-3">
+            <p style="font-family: Chalkduster; font-size: 16px; margin-top: 5px; text-align: center;">
+                "A beanie"
+            </p>
+        </div>
+        <div class="col-md-3">
+            <p style="font-family: Chalkduster; font-size: 16px; margin-top: 5px; text-align: center;">
+                "A toy flower"
+            </p>
+        </div>
+        <div class="col-md-3">
+            <p style="font-family: Chalkduster; font-size: 16px; margin-top: 5px; text-align: center;">
+                "A miffy bunny"
+            </p>
+        </div>
+    </div>
+
+    <div class="row" style="display: flex; align-items: center;">
+        <div class="col-md-3" style="text-align: center; font-weight: bold;">
+            
+        </div>
+        <div class="col-md-9">
+            <p style="font-family: Chalkduster; font-size: 16px; margin-top: 5px; text-align: center;">"... with wooven texture"</p>
+        </div>
+    </div>
+  </div>
+  <hr style="max-width: 1200px;">
+<!-- </section> -->
+
+
+<!-- Abstract -->
+<!-- <section class="section"> -->
+  <div class="container is-max-desktop">
+    <div class="column is-centered has-text-centered">
+        <h2 class="title has-text-centered">Abstract</h2>
+        <div class="content has-text-justified">
+          <p>
+            3D generation methods have shown visually compelling results powered by diffusion image priors. However, they often fail to produce realistic geometric details, resulting in overly smooth surfaces or geometric details inaccurately baked in albedo maps. To address this, we introduce a new method that incorporates touch as an additional modality to improve the geometric details of generated 3D assets. 
+          </p>
+          <p>
+            We design a lightweight 3D texture field to synthesize visual and tactile textures, guided by diffusion-based distribution matching losses on both visual and tactile domains. Our method ensures the consistency between visual and tactile textures while preserving photorealism. We further present a multi-part editing pipeline that enables us to synthesize different textures across various regions. To our knowledge, we are the first to leverage high-resolution tactile sensing to enhance geometric details for 3D generation tasks. We evaluate our method on both text-to-3D and image-to-3D settings. Our experiments demonstrate that our method provides customized and realistic fine geometric textures while maintaining accurate alignment
+            between two modalities of vision and touch.
+          </p>
+        </div>
+    </div>
+  </div>
+  <hr style="max-width: 1200px;">
+<!-- </section> -->
+
+
+<!-- Method -->
+<div class="container is-max-desktop">
+  <div class="column is-centered has-text-centered">
+      <h2 class="title has-text-centered">Method</h2>
+      <div class="content has-text-justified">
+        <p>
+        </p>
+        <img src="./static/images/method.jpg" style="width: 100%;">
+
+      </div>
+  </div>
+</div>
+<hr style="max-width: 1200px;">
+
+
+<!-- Results: same objects with diverse textures -->
+<div class="container" style="max-width: 1400px;">
+  <h2 class="text-center" style="margin-bottom: 30px; margin-top: 10px;"> Application: Same Object with Diverse Textures</h2>
+  <p style="margin-bottom: 30px; margin-bottom: 30px;">
+    We show diverse textures synthsized on the same object, which facillatests teh custom design of 3D assets.
+  </p>
+
+  <div class="row" style="display: flex; align-items: center;">
+      <div class="col" style="flex: 1 1 20%;">
+          <video autoplay="autoplay" controls="controls" loop="loop" muted="muted"
+                                      src="static/videos/coffee_cup/a_coffee_cup_ClothBag_ours_TSDS_vstack.mp4"
+                                      style="width: 100%" type="video/mp4"></video>
+      </div>
+      <div class="col" style="flex: 1 1 20%;">
+          <video autoplay="autoplay" controls="controls" loop="loop" muted="muted"
+                                      src="static/videos/coffee_cup/a_coffee_cup_OrangeGlove_ours_TSDS_vstack.mp4"
+                                      style="width: 100%" type="video/mp4"></video>
+      </div>
+      <div class="col" style="flex: 1 1 20%;">
+          <video autoplay="autoplay" controls="controls" loop="loop" muted="muted"
+                                      src="static/videos/coffee_cup/a_coffee_cup_cantaloupe_ours_TSDS_vstack.mp4"
+                                      style="width: 100%" type="video/mp4"></video>
+      </div>
+      <div class="col" style="flex: 1 1 20%;">
+          <video autoplay="autoplay" controls="controls" loop="loop" muted="muted"
+                                      src="static/videos/coffee_cup/a_coffee_cup_GoldGoat_ours_TSDS_vstack.mp4"
+                                      style="width: 100%" type="video/mp4"></video>
+      </div>
+      <div class="col" style="flex: 1 1 20%;">
+          <video autoplay="autoplay" controls="controls" loop="loop" muted="muted"
+                                      src="static/videos/coffee_cup/a_coffee_cup_Strawberry_ours_TSDS_vstack.mp4"
+                                      style="width: 100%" type="video/mp4"></video>
+      </div>
+  </div>
+
+  <div class="row" style="display: flex; align-items: center;">
+      <div class="col" style="flex: 1 1 20%;">
+          <p style="font-family: Chalkduster; font-size: 16px; margin-top: 5px; text-align: center;">
+              "canvas bag"
+          </p>
+      </div>
+      <div class="col" style="flex: 1 1 20%;">
+          <p style="font-family: Chalkduster; font-size: 16px; margin-top: 5px; text-align: center;">
+              "heat resistant rubber with heart shape"
+          </p>
+      </div>
+      <div class="col" style="flex: 1 1 20%;">
+          <p style="font-family: Chalkduster; font-size: 16px; margin-top: 5px; text-align: center;">
+              "cantaloupe"
+          </p>
+      </div>
+      <div class="col" style="flex: 1 1 20%;">
+          <p style="font-family: Chalkduster; font-size: 16px; margin-top: 5px; text-align: center;">
+              "stripe sculpture steel"
+          </p>
+      </div>
+      <div class="col" style="flex: 1 1 20%;">
+          <p style="font-family: Chalkduster; font-size: 16px; margin-top: 5px; text-align: center;">
+              "strawberry"
+          </p>
+      </div>
+  </div>
+
+  <div class="row" style="display: flex; align-items: center;">
+      <div class="col-md-12">
+          <p style="font-family: Chalkduster; font-size: 16px; margin-top: 5px; text-align: center;">"A coffee cup with ... texture"</p>
+      </div>
+  </div>
+</div>
+<hr style="max-width: 1400px;">
+
+<!-- Results: single-part editing -->
+<div class="container" style="max-width: 1400px;">
+  <h2 class="text-center" style="margin-bottom: 30px; margin-top: 10px;">Single-part Objects Editing Results</h2>
+  <p style="margin-bottom: 30px; margin-bottom: 30px;">
+    We show 3D generation with a single texture. Our method generates realistic and coherent visual textures and geometric details. 
+  </p>
+
+
+  <div class="row" style="display: flex; align-items: center;">
+      <div class="col-md-3">
+          <video autoplay="autoplay" controls="controls" loop="loop" muted="muted"
+                                      src="static/videos/single_part/a_chopping_board_CuttingBoard_ours_TSDS_vstack.mp4"
+                                      style="width: 100%" type="video/mp4"></video>
+      </div>
+      <div class="col-md-3">
+          <video autoplay="autoplay" controls="controls" loop="loop" muted="muted"
+                                      src="static/videos/single_part/a_cork_table_mat_CorkMat_ours_TSDS_vstack.mp4"
+                                      style="width: 100%" type="video/mp4"></video>
+      </div>
+      <div class="col-md-3">
+          <video autoplay="autoplay" controls="controls" loop="loop" muted="muted"
+                                      src="static/videos/single_part/a_corn_1_Corn_ours_TSDS_vstack.mp4"
+                                      style="width: 100%" type="video/mp4"></video>
+      </div>
+      <div class="col-md-3">
+          <video autoplay="autoplay" controls="controls" loop="loop" muted="muted"
+                                      src="static/videos/single_part/a_heat_resistant_glove_OrangeGlove_ours_TSDS_vstack.mp4"
+                                      style="width: 100%" type="video/mp4"></video>
+      </div>
+  </div>
+
+  <div class="row" style="display: flex; align-items: center;">
+      <div class="col-md-3">
+          <p style="font-family: Chalkduster; font-size: 16px; margin-top: 5px; text-align: center;">
+              "A chopping board"
+          </p>
+      </div>
+      <div class="col-md-3">
+          <p style="font-family: Chalkduster; font-size: 16px; margin-top: 5px; text-align: center;">
+              "A cork table mat"
+          </p>
+      </div>
+      <div class="col-md-3">
+          <p style="font-family: Chalkduster; font-size: 16px; margin-top: 5px; text-align: center;">
+              "A corn"
+          </p>
+      </div>
+      <div class="col-md-3">
+          <p style="font-family: Chalkduster; font-size: 16px; margin-top: 5px; text-align: center;">
+              "A heat resistant glove
+          </p>
+      </div>
+  </div>
+
+  <div class="row" style="display: flex; align-items: center;">
+      <div class="col-md-3">
+          <video autoplay="autoplay" controls="controls" loop="loop" muted="muted"
+                                      src="static/videos/single_part/a_NFL_football_2_Football_ours_TSDS_vstack.mp4"
+                                      style="width: 100%" type="video/mp4"></video>
+      </div>
+      <div class="col-md-3">
+          <video autoplay="autoplay" controls="controls" loop="loop" muted="muted"
+                                      src="static/videos/single_part/a_potato_Potato_ours_TSDS_vstack.mp4"
+                                      style="width: 100%" type="video/mp4"></video>
+      </div>
+      <div class="col-md-3">
+          <video autoplay="autoplay" controls="controls" loop="loop" muted="muted"
+                                      src="static/videos/single_part/a_strawberry_Strawberry_ours_TSDS_vstack.mp4"
+                                      style="width: 100%" type="video/mp4"></video>
+      </div>
+      <div class="col-md-3">
+          <video autoplay="autoplay" controls="controls" loop="loop" muted="muted"
+                                      src="static/videos/single_part/an_orange_Orange_ours_TSDS_vstack.mp4"
+                                      style="width: 100%" type="video/mp4"></video>
+      </div>
+  </div>
+
+  <div class="row" style="display: flex; align-items: center;">
+      <div class="col-md-3">
+          <p style="font-family: Chalkduster; font-size: 16px; margin-top: 5px; text-align: center;">
+              "An NFL football"
+          </p>
+      </div>
+      <div class="col-md-3">
+          <p style="font-family: Chalkduster; font-size: 16px; margin-top: 5px; text-align: center;">
+              "A potato"
+          </p>
+      </div>
+      <div class="col-md-3">
+          <p style="font-family: Chalkduster; font-size: 16px; margin-top: 5px; text-align: center;">
+              "A strawberry"
+          </p>
+      </div>
+      <div class="col-md-3">
+          <p style="font-family: Chalkduster; font-size: 16px; margin-top: 5px; text-align: center;">
+              "An orange"
+          </p>
+      </div>
+  </div>
+</div>
+<hr style="max-width: 1400px;">
+
+
+<!-- Results: multi-part editing -->
+<div class="container" style="max-width: 1400px;">
+  <h2 class="text-center" style="margin-bottom: 30px; margin-top: 10px;">Multi-part Objects Editing Results</h2>
+  <p style="margin-bottom: 30px; margin-bottom: 30px;">
+    Our method allows users to specify an object and its two parts to assign different textures. 
+  </p>
+
+  <div class="row" style="display: flex; align-items: center;">
+      <div class="col-md-4">
+          <video autoplay="autoplay" controls="controls" loop="loop" muted="muted"
+                                      src="static/videos/multi_part/a_cactus_in_a_pot_3_Orange_OrangeGlove_ours_TSDS_vstack.mp4"
+                                      style="width: 100%" type="video/mp4"></video>
+      </div>
+      <div class="col-md-4">
+          <video autoplay="autoplay" controls="controls" loop="loop" muted="muted"
+                                      src="static/videos/multi_part/a_gold_goat_sculpture_GoldGoat_TableTennisHandle_ours_TSDS_vstack.mp4"
+                                      style="width: 100%" type="video/mp4"></video>
+      </div>
+      <div class="col-md-4">
+          <video autoplay="autoplay" controls="controls" loop="loop" muted="muted"
+                                      src="static/videos/multi_part/lamp1_ClothBag_MetalFrame_ours_TSDS_vstack.mp4"
+                                      style="width: 100%" type="video/mp4"></video>
+      </div>
+  </div>
+
+  <div class="row" style="display: flex; align-items: center;">
+      <div class="col-md-4">
+          <p style="font-family: Chalkduster; font-size: 16px; margin-top: 5px; text-align: center;">
+              "A cactus in a pot, cactus with orange texture, pot with heat resistant rubber with heart-shape pattern texture"
+          </p>
+      </div>
+      <div class="col-md-4">
+          <p style="font-family: Chalkduster; font-size: 16px; margin-top: 5px; text-align: center;">
+              "A goat sculpture with gold goat and black base, goat with fine stripe sculptet steel texture, base with smooth wood texture"
+          </p>
+      </div>
+      <div class="col-md-4">
+          <p style="font-family: Chalkduster; font-size: 16px; margin-top: 5px; text-align: center;">
+              "A lamp with white white lampshade and wooden base, lampshade with canvas bag's texture, base with metal grid texture"
+          </p>
+      </div>
+  </div>
+</div>
+<hr style="max-width: 1400px;">
 
 
 <!-- BibTex -->
-<section class="section" id="BibTeX">
+<!-- <section class="section" id="BibTeX"> -->
   <div class="container is-max-desktop content">
-    <h2 class="title"><a id="bibtex">BibTeX</a></h2>
-    <pre><code>
-        
-    </code></pre>
-  </div>
-</section>
+  <h2 class="text-center" style="margin-bottom: 30px; margin-top: 10px;">BibTex</h2>
+  <pre><code>
+      
+  </code></pre>
+</div>
+<!-- </section> -->
 
 <footer class="footer">
   <div class="container">
