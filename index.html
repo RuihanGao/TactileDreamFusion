@@ -74,7 +74,7 @@
 <!-- Title -->
 <section class="hero">
   <div class="hero-body">
-    <div class="container is-max-desktop">
+    <div class="container" style="max-width: 1400px;">
       <div class="columns is-centered">
         <div class="column has-text-centered">
           <h1 class="title is-1 publication-title">Tactile DreamFusion: Exploiting Tactile Sensing for 3D Generation
@@ -181,6 +181,7 @@
 
 <!-- Teaser video and text -->
 <!-- <section class="hero teaser"> -->
+<div class="container" style="max-width: 1400px;">
   <h2 class="subtitle has-text-justified">
     <b>3D content creation with touch: </b> 
     Our method <span class="method-title">TactileDreamFusion</span> integrates high-resolution tactile sensing with diffusion-based image priors to enhance fine geometric details for text- or image-to-3D generation. The following results are rendered using Blender, with full-color rendering on the top and normal rendering at the bottom.
@@ -304,13 +305,14 @@
         </div>
     </div>
   </div>
-  <hr style="max-width: 1200px;">
+  <hr style="max-width: 1400px;">
+</div>
 <!-- </section> -->
 
 
 <!-- Abstract -->
 <!-- <section class="section"> -->
-  <div class="container is-max-desktop">
+  <div class="container" style="max-width: 1400px;">
     <div class="column is-centered has-text-centered">
         <h2 class="title has-text-centered">Abstract</h2>
         <div class="content has-text-justified">
@@ -323,13 +325,14 @@
           </p>
         </div>
     </div>
+    <hr style="max-width: 1400px;">
   </div>
-  <hr style="max-width: 1200px;">
+
 <!-- </section> -->
 
 
 <!-- Method -->
-<div class="container is-max-desktop">
+<div class="container" style="max-width: 1400px;">
   <div class="column is-centered has-text-centered">
       <h2 class="title has-text-centered">Method</h2>
       <div class="content has-text-justified">
@@ -338,9 +341,10 @@
         <img src="./static/images/method.jpg" style="width: 100%;">
 
       </div>
+      <hr style="max-width: 1400px;">
   </div>
 </div>
-<hr style="max-width: 1200px;">
+
 
 
 <!-- Results: same objects with diverse textures -->
@@ -411,12 +415,13 @@
           <p style="font-family: Chalkduster; font-size: 16px; margin-top: 5px; text-align: center;">"A coffee cup with ... texture"</p>
       </div>
   </div>
+  <hr style="max-width: 1400px;">
 </div>
-<hr style="max-width: 1400px;">
+
 
 <!-- Results: single-part editing -->
 <div class="container" style="max-width: 1400px;">
-  <h2 class="text-center" style="margin-bottom: 30px; margin-top: 10px;">Single-part Objects Editing Results</h2>
+  <h2 class="text-center" style="margin-bottom: 30px; margin-top: 10px;">Single Texture Generation</h2>
   <p style="margin-bottom: 30px; margin-bottom: 30px;">
     We show 3D generation with a single texture. Our method generates realistic and coherent visual textures and geometric details. 
   </p>
@@ -513,54 +518,149 @@
           </p>
       </div>
   </div>
+  <hr style="max-width: 1400px;">
 </div>
-<hr style="max-width: 1400px;">
+
 
 
 <!-- Results: multi-part editing -->
 <div class="container" style="max-width: 1400px;">
-  <h2 class="text-center" style="margin-bottom: 30px; margin-top: 10px;">Multi-part Objects Editing Results</h2>
-  <p style="margin-bottom: 30px; margin-bottom: 30px;">
-    Our method allows users to specify an object and its two parts to assign different textures. 
+  <h2 class="text-center" style="margin-bottom: 30px; margin-top: 10px;">Multi-Part Texture Generation</h2>
+  <p style="margin-bottom: 30px;">
+    This grid demonstrates different render types for each object: predicted label map, albedo, normal map, zoomed-in normal patch, and full-color rendering.
   </p>
 
-  <div class="row" style="display: flex; align-items: center;">
-      <div class="col-md-4">
-          <video autoplay="autoplay" controls="controls" loop="loop" muted="muted"
-                                      src="static/videos/multi_part/a_cactus_in_a_pot_3_Orange_OrangeGlove_ours_TSDS_vstack.mp4"
-                                      style="width: 100%" type="video/mp4"></video>
-      </div>
-      <div class="col-md-4">
-          <video autoplay="autoplay" controls="controls" loop="loop" muted="muted"
-                                      src="static/videos/multi_part/a_gold_goat_sculpture_GoldGoat_TableTennisHandle_ours_TSDS_vstack.mp4"
-                                      style="width: 100%" type="video/mp4"></video>
-      </div>
-      <div class="col-md-4">
-          <video autoplay="autoplay" controls="controls" loop="loop" muted="muted"
-                                      src="static/videos/multi_part/lamp1_ClothBag_MetalFrame_ours_TSDS_vstack.mp4"
-                                      style="width: 100%" type="video/mp4"></video>
-      </div>
+
+  <!-- Header Row -->
+  <div class="row" style="display: flex; text-align: center; font-weight: bold; margin-bottom: 10px;">
+    <div class="col-md-3">Input</div>
+    <div class="col-md-2">Predicted Label</div>
+    <div class="col-md-2">Generated Albedo</div>
+    <div class="col-md-2">Generated Normal</div>
+    <div class="col-md-1">Zoomed Patch</div>
+    <div class="col-md-2">Rendered Full Color</div>
   </div>
 
+  <!-- Example 1 -->
   <div class="row" style="display: flex; align-items: center;">
-      <div class="col-md-4">
-          <p style="font-family: Chalkduster; font-size: 16px; margin-top: 5px; text-align: center;">
-              "A cactus in a pot, cactus with orange texture, pot with heat resistant rubber with heart-shape pattern texture"
-          </p>
+    <div class="col-md-3">
+      <img src="static/images/multiparts_cactus_input.png" style="width: 100%;" alt="cactus input">
+    </div>
+    <div class="col-md-2">
+      <video autoplay="autoplay" controls="controls" loop="loop" muted="muted"
+            src="static/videos/multi_part/a_cactus_in_a_pot_3_Orange_OrangeGlove_ours_TSDS_label_rotate.mp4" style="width: 100%;" type="video/mp4"></video>
+    </div>
+    <div class="col-md-2">
+        <video autoplay="autoplay" controls="controls" loop="loop" muted="muted"
+                src="static/videos/multi_part/a_cactus_in_a_pot_3_Orange_OrangeGlove_ours_TSDS_albedo_rotate.mp4" style="width: 100%;" type="video/mp4"></video>
+    </div>
+    <div class="col-md-2">
+        <video autoplay="autoplay" controls="controls" loop="loop" muted="muted"
+                src="static/videos/multi_part/a_cactus_in_a_pot_3_Orange_OrangeGlove_ours_TSDS_normal_rotate.mp4" style="width: 100%;" type="video/mp4"></video>
+    </div>
+    <!-- center align the image -->
+    <div class="col-md-1">
+        <img src="static/images/multiparts_cactus_patches.png" style="width: 100%;" alt="Zoomed Patch">
+    </div>
+    <div class="col-md-2">
+        <video autoplay="autoplay" controls="controls" loop="loop" muted="muted"
+                src="static/videos/multi_part/a_cactus_in_a_pot_3_Orange_OrangeGlove_ours_TSDS_full_color_rotate.mp4" style="width: 100%;" type="video/mp4"></video>
+    </div>
+  </div>
+  <hr>
+
+  <!-- Example 2 -->
+  <div class="row" style="display: flex; align-items: center; margin-top: 15px;">
+    <div class="col-md-3">
+      <img src="static/images/multiparts_goat_input.png" style="width: 100%;" alt="cactus input">
+    </div>
+    <div class="col-md-2">
+        <video autoplay="autoplay" controls="controls" loop="loop" muted="muted"
+                src="static/videos/multi_part/a_gold_goat_sculpture_GoldGoat_TableTennisHandle_ours_TSDS_label_rotate.mp4" style="width: 100%;" type="video/mp4"></video>
+    </div>
+    <div class="col-md-2">
+      <video autoplay="autoplay" controls="controls" loop="loop" muted="muted"
+              src="static/videos/multi_part/a_gold_goat_sculpture_GoldGoat_TableTennisHandle_ours_TSDS_albedo_rotate.mp4" style="width: 100%;" type="video/mp4"></video>
+    </div>
+    <div class="col-md-2">
+        <video autoplay="autoplay" controls="controls" loop="loop" muted="muted"
+                src="static/videos/multi_part/a_gold_goat_sculpture_GoldGoat_TableTennisHandle_ours_TSDS_normal_rotate.mp4" style="width: 100%;" type="video/mp4"></video>
+    </div>
+    <div class="col-md-1">
+      <img src="static/images/multiparts_goat_patches.png" style="width: 100%;" alt="Zoomed Patch">
+    </div>
+    <div class="col-md-2">
+      <video autoplay="autoplay" controls="controls" loop="loop" muted="muted"
+              src="static/videos/multi_part/a_gold_goat_sculpture_GoldGoat_TableTennisHandle_ours_TSDS_full_color_rotate.mp4" style="width: 100%;" type="video/mp4"></video>
+    </div>
+  </div>
+  <hr>
+
+  <!-- Example 3 -->
+  <div class="row" style="display: flex; align-items: center; margin-top: 15px;">
+    <div class="col-md-3">
+      <img src="static/images/multiparts_lamp_input.png" style="width: 100%;" alt="cactus input">
+    </div>
+    <div class="col-md-2">
+        <video autoplay="autoplay" controls="controls" loop="loop" muted="muted"
+                src="static/videos/multi_part/lamp1_ClothBag_MetalFrame_ours_TSDS_label_rotate.mp4" style="width: 100%;" type="video/mp4"></video>
+    </div>
+    <div class="col-md-2">
+        <video autoplay="autoplay" controls="controls" loop="loop" muted="muted"
+                src="static/videos/multi_part/lamp1_ClothBag_MetalFrame_ours_TSDS_albedo_rotate.mp4" style="width: 100%;" type="video/mp4"></video>
+    </div>
+    <div class="col-md-2">
+        <video autoplay="autoplay" controls="controls" loop="loop" muted="muted"
+                src="static/videos/multi_part/lamp1_ClothBag_MetalFrame_ours_TSDS_normal_rotate.mp4" style="width: 100%;" type="video/mp4"></video>
+    </div>
+    <div class="col-md-1">
+        <img src="static/images/multiparts_lamp_patches.png" style="width: 100%;" alt="Zoomed Patch">
+    </div>
+    <div class="col-md-2">
+        <video autoplay="autoplay" controls="controls" loop="loop" muted="muted"
+                src="static/videos/multi_part/lamp1_ClothBag_MetalFrame_ours_TSDS_full_color_rotate.mp4" style="width: 100%;" type="video/mp4"></video>
+    </div>
+  </div>
+  <hr style="max-width: 1400px;">
+</div>
+
+
+
+
+
+<!-- References and Acknowledgement -->
+<div class="container" style="max-width: 1400px;">
+  <div class="columns is-centered">
+    <div class="column is-full-width">
+      <div class="container" style="max-width: 1400px;">
+
+          <!-- References -->
+        <div class="columns is-centered">
+          <div class="column is-full-width">
+            <!-- <h2 class="title is-3 has-text-centered">References</h2> -->
+            <!-- <div class="content has-text-justified">
+              <p></p>
+              Put your references here
+              <p></p>
+            </div> -->
+          </div>
+        </div>
+
+        <!-- Acknowledgment -->
+        <div class="columns is-centered">
+          <div class="column is-full-width">
+            <h2 class="title is-3 has-text-centered">Acknowledgment</h2>
+            <div class="content has-text-justified">
+              <p>
+                We thank Sheng-Yu Wang, Nupur Kumari, Gaurav Parmar, Hung-Jui Huang, and Maxwell Jones for their helpful comments and discussion. We are also grateful to Arpit Agrawal and Sean Liu for proofreading the draft. Kangle Deng is supported by the Microsoft research Ph.D. fellowship. Ruihan Gao is supported by the A*STAR National Science Scholarship (Ph.D.).
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="col-md-4">
-          <p style="font-family: Chalkduster; font-size: 16px; margin-top: 5px; text-align: center;">
-              "A goat sculpture with gold goat and black base, goat with fine stripe sculptet steel texture, base with smooth wood texture"
-          </p>
-      </div>
-      <div class="col-md-4">
-          <p style="font-family: Chalkduster; font-size: 16px; margin-top: 5px; text-align: center;">
-              "A lamp with white white lampshade and wooden base, lampshade with canvas bag's texture, base with metal grid texture"
-          </p>
-      </div>
+    </div>
   </div>
 </div>
-<hr style="max-width: 1400px;">
 
 
 <!-- BibTex -->
