@@ -1,0 +1,15 @@
+__pycache__/
+build/
+*.egg-info/
+*.so
+venv_*/
+.vs/
+.vscode/
+.idea/
+
+tmp_*
+logs*
+*.mp4
+data/*
+!data/tactile_textures
+!data/exp_meshes
