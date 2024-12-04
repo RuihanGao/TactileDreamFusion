@@ -2,17 +2,13 @@ from diffusers import (
     DDIMScheduler,
     StableDiffusionPipeline,
 )
-from diffusers.utils.import_utils import is_xformers_available
-
 
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-# from guidance.cross_attention import prep_unet
 import os.path as osp
-import os
-from peft import PeftModel, LoraConfig
+from peft import PeftModel
 import diffusers
 import pdb
 
@@ -23,7 +19,7 @@ def seed_everything(seed):
     # torch.backends.cudnn.benchmark = True
 
 
-class TactileLoRA(nn.Module):
+class TextureDreambooth(nn.Module):
     def __init__(
         self,
         device,
@@ -64,24 +60,15 @@ class TactileLoRA(nn.Module):
         
         if lora_dir is not None:
             # Load LoRA model
-
             diffusers_version = diffusers.__version__
-            if int(diffusers_version.split('.')[1]) < 20: # TODO: not sure if 20 if a good dividing line/
-                print(f"Running with diffusers version {diffusers_version}, using load_attn_procs to load LoRA model")
-                raise NotImplementedError("load_attn_procs only updates attn layers, not the text encoder")
-                # for diffusers v0.19.3
-                pipe.unet.load_attn_procs(lora_dir)
-                pipe.to(device)
-            else:
-                print(f"Running with diffusers version {diffusers_version}, using PeftModel to load LoRA model")
-                # for diffusers v0.29.2
-                unet_sub_dir = osp.join(lora_dir, "unet")
-                pipe.unet = PeftModel.from_pretrained(pipe.unet, unet_sub_dir, adapter_name=adapter_name, torch_dtype=self.dtype).to(device)
-            
-                text_encoder_sub_dir = osp.join(lora_dir, "text_encoder")
-                if osp.exists(text_encoder_sub_dir):
-                    pipe.text_encoder = PeftModel.from_pretrained(pipe.text_encoder, text_encoder_sub_dir, adapter_name=adapter_name, torch_dtype=self.dtype).to(device)
-
+            assert int(diffusers_version.split('.')[1]) > 20, f"diffusers version {diffusers_version} not supported"
+            print(f"Running with diffusers version {diffusers_version}, using PeftModel to load LoRA model")
+            # for diffusers v0.29.2
+            unet_sub_dir = osp.join(lora_dir, "unet")
+            pipe.unet = PeftModel.from_pretrained(pipe.unet, unet_sub_dir, adapter_name=adapter_name, torch_dtype=self.dtype).to(device)
+            text_encoder_sub_dir = osp.join(lora_dir, "text_encoder")
+            if osp.exists(text_encoder_sub_dir):
+                pipe.text_encoder = PeftModel.from_pretrained(pipe.text_encoder, text_encoder_sub_dir, adapter_name=adapter_name, torch_dtype=self.dtype).to(device)
 
         self.vae = pipe.vae.eval()
         self.unet = pipe.unet.eval()
@@ -361,7 +348,7 @@ if __name__ == "__main__":
 
     device = torch.device("cuda")
 
-    model = TactileLoRA(device, opt.fp16, opt.sd_version, opt.hf_key, lora_dir=opt.lora_dir, adapter_name=opt.adapter_name)
+    model = TextureDreambooth(device, opt.fp16, opt.sd_version, opt.hf_key, lora_dir=opt.lora_dir, adapter_name=opt.adapter_name)
 
     imgs = model.prompt_to_img(opt.prompt, opt.negative, opt.H, opt.W, opt.steps)
 

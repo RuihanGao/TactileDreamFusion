@@ -37,28 +37,18 @@ class MyCrossAttnProcessor:
         return hidden_states
 
 
-"""
-A function that prepares a U-Net model for training by enabling gradient computation 
-for a specified set of parameters and setting the forward pass to be performed by a 
-custom cross attention processor.
-
-Parameters:
-unet: A U-Net model.
-
-Returns:
-unet: The prepared U-Net model.
-"""
 def prep_unet(unet):
-    # # set the gradients for XA maps to be true
-    # for name, params in unet.named_parameters():
-    #     if 'attn2' in name:
-    #         params.requires_grad = True
-    #     else:
-    #         params.requires_grad = False
+    """
+    Set the original forward pass to be performed by a custom cross attention processor. 
+    We only extract the attention probabilities from the attention module, not training the model.
 
-    print(f"Prepping U-Net model for extracting cross attention layers.")
-    # replace the fwd function
-    print(f"Iterate through the named modules in the U-Net model.")
+    Parameters:
+    unet: A U-Net model.
+
+    Returns:
+    unet: The prepared U-Net model.
+    """
+
     for name, module in unet.named_modules():
         module_name = type(module).__name__
         if module_name == "Attention":

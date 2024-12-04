@@ -1,0 +1,126 @@
+### Input
+# input rgba image path (default to None, can be load in GUI too)
+input:
+# input text prompt (default to None, can be input in GUI too)
+prompt:
+# add the folowing default prompts in utils.py-> generate_textured_prompt()
+# positive_prompt: ", highly detailed, hd, best quality"
+# negative_prompt: "bad quality, blurred, low resolution, low quality, worst quality, low res, glitch, deformed, mutated, ugly, disfigured"
+
+# input mesh for stage 2 (auto-search from stage 1 output path if None)
+mesh:
+# estimated elevation angle for input image
+elevation: 0
+# reference image resolution
+ref_size: 256
+# density thresh for mesh extraction
+density_thresh: 1
+# ssaa scale
+ssaa_min_scale: 1
+ssaa_max_scale: 2
+
+no_tactile: False
+no_train_tactile: False
+tactile_texture_object: GreenSweater
+tactile_texture_index: 2
+
+# configuration for positional encoding of texture field
+num_frequencies: 10
+max_freq: 5
+
+# configuration for the part label map
+num_part_label: 2 # currently support 0 (single texture) and 2 (multipart texture)
+lambda_label_field: 1
+
+# configuration to match physical scale of textures
+texture_crop_ratio: 1
+
+
+# configuration of lighting dir for mesh rendering
+light_sample_strategy: magic3d # "magic3d", "camdir", "dreamfusion"
+
+
+
+### Output
+outdir: logs
+mesh_format: obj
+save_path: ???
+
+### Training
+# guidance loss weights (0 to disable)
+lambda_normalcontrolnet: 5
+lambda_normalcontrolnet_L1: 1
+lambda_normalcontrolnet_lpips: 1
+controlnet_conditioning_scale: 0.2
+denoising_guidance_scale: 7.5
+controlnet_toggle_prob: 1
+min_noise_level: 0.02
+max_noise_level: 0.1
+
+
+lambda_albedo_regularization: 10000
+albedo_regularization_use_mean: 1 # option to regularize albedo using mean color instead of the full image
+lambda_albedo_recon: 1
+# tactile loss weights (0 to disable)
+lambda_tactile_regularization: 0.1
+lambda_tactile_regularization_init: 1
+lambda_tactile_guidance: 0.05
+tacitle_guidance_mode: "multistep" # "singlestep" or "multistep"
+tactile_guidance_scale: 7.5 # default 7.5
+tactile_guidance_multistep_steps: 50
+tactile_guidance_multistep_strength: 0.8
+tactile_lora_dir: null
+
+# add option of different weight for different parts. Each part has equal weight by default
+lambda_tactile_regularization_partA: 1
+lambda_tactile_regularization_partB: 1
+
+# additional configuration for sd guidance
+sd_guidance_strength: 0.5 # starting value for sd guidance, increase gradually with the training
+max_guidance_strength: 0.7
+
+# training batch size per iter
+batch_size: 1
+# training iterations for stage 2 (init and refine)
+# TODO: change the number of iterations back to the original setting after testing
+iters_refine: 200 # 200 
+iters_init: 150 # 150
+# training camera radius
+radius: 1.25 # 2.5
+radius_range: [0.0, 1.0] # [0, 2]
+# training camera fovy
+fovy: 49.1
+# training camera min elevation
+min_ver: -30
+# training camera max elevation
+max_ver: 30
+# checkpoint to load for stage 1 (should be a ply file)
+load:
+
+# training camera for patch rendering
+patch_batch_size: 4
+patch_W: 512
+patch_H: 512
+patch_radius: 1
+patch_fovy: 49.1
+patch_cam_proj_mode: "orthographic" # "perspective" or "orthographic"
+patch_cam_dist: 0.1 # matters for perspective projection
+view_volume_size: 0.15 # matters for orthographic projection
+
+
+# lighting setting for rendering
+diffuse_light_color: 0.5
+ambient_light_color: 0.5
+
+### GUI
+# GUI resolution
+H: 800
+W: 800
+
+
+### Textured Mesh
+texture_lr: 0.01 # 0.2
+
+# configuration for logging vide
+save_frame: False
+save_frame_idx: -1

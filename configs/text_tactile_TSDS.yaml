@@ -81,10 +81,8 @@ max_guidance_strength: 0.7
 
 # training batch size per iter
 batch_size: 4
-# training iterations for stage 2 (init and refine)
-# TODO: change the number of iterations back to the original setting after testing
-iters_refine: 20 # 200 
-iters_init: 15 # 150
+iters_refine: 200 # training iterations for stage 2 (init and refine)
+iters_init: 150 
 # training camera radius
 radius: 1.25 # 2.5
 radius_range: [0.0, 1.0] # [0, 2]
@@ -117,11 +115,8 @@ ambient_light_color: 0.5
 H: 800
 W: 800
 
-
 ### Textured Mesh
 texture_lr: 0.01 # 0.2
-use_tcnn_encoding: True
-
 
 # configuration for logging vide
 save_frame: False

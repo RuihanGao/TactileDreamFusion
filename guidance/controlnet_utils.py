@@ -2,19 +2,14 @@ from diffusers import (
     DDIMScheduler,
     StableDiffusionPipeline,
     ControlNetModel,
-    PNDMScheduler,
     StableDiffusionControlNetPipeline,
     UniPCMultistepScheduler,
 )
-from diffusers.utils.import_utils import is_xformers_available
 from controlnet_aux import NormalBaeDetector
-
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from guidance.cross_attention import prep_unet
-import time
 
 def seed_everything(seed):
     torch.manual_seed(seed)
@@ -92,24 +87,19 @@ class ControlNet(nn.Module):
         self.vae = pipe.vae
         self.tokenizer = pipe.tokenizer
         self.text_encoder = pipe.text_encoder
+        # use prep_unet to save attention maps
         self.unet = prep_unet(pipe.unet)
-        # self.unet = pipe.unet 
-
-        # TODO: Which scheduler to use, UniPCMultistepScheduler or DDIMScheduler or PNDMScheduler?
         self.scheduler = DDIMScheduler.from_pretrained(
             model_key, subfolder="scheduler", torch_dtype=self.dtype
         )
-        self.num_train_timesteps = 1000
-        # self.scheduler = PNDMScheduler(beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", num_train_timesteps=self.num_train_timesteps)
-
-
+        
         del pipe
 
         # Load Normal-conditioned-ControlNet
         self.controlnet = ControlNetModel.from_pretrained(controlnet_name, torch_dtype=self.dtype).to(device)
         self.processor = NormalBaeDetector.from_pretrained("lllyasviel/Annotators")
 
-        # self.num_train_timesteps = self.scheduler.config.num_train_timesteps
+        self.num_train_timesteps = 1000
         self.min_step = int(self.num_train_timesteps * t_range[0])
         self.max_step = int(self.num_train_timesteps * t_range[1])
         self.alphas = self.scheduler.alphas_cumprod.to(self.device)  # for convenience
@@ -171,8 +161,6 @@ class ControlNet(nn.Module):
             # Initialize attention maps
             cross_attn = {}
             self_attn = {}
-
-        # print(f"In refine function of controlnet_utils.py: guidance_scale {guidance_scale}, steps {steps}, strength {strength}, controlnet_conditioning_scale {controlnet_conditioning_scale}")
         batch_size = pred_rgb.shape[0]
         pred_rgb_512 = F.interpolate(pred_rgb, (512, 512), mode='bilinear', align_corners=False)
         latents = self.encode_imgs(pred_rgb_512.to(self.dtype))
@@ -185,10 +173,6 @@ class ControlNet(nn.Module):
         init_step = int(steps * strength)
         latents = self.scheduler.add_noise(latents, torch.randn_like(latents), self.scheduler.timesteps[init_step])
         embeddings = torch.cat([self.embeddings['pos'].expand(batch_size, -1, -1), self.embeddings['neg'].expand(batch_size, -1, -1)])
-
-        # print(f"Running multi-step refinement with ControlNet-based SDS.")
-        # print(f"check what timesteps look like after set_timesteps: len {len(self.scheduler.timesteps)}, first 5: {self.scheduler.timesteps[:5]}") # (steps=50, strength=0.8): len 50, first 5: tensor([981, 961, 941, 921, 901])
-        # print(f"start from init_step: {init_step}, len {len(self.scheduler.timesteps[init_step:])}, first 5: {self.scheduler.timesteps[init_step:][:5]}") # start from init_step: 40, len 10, first 5: tensor([181, 161, 141, 121, 101])
 
         for i, t in enumerate(self.scheduler.timesteps[init_step:]):
             
@@ -242,15 +226,12 @@ class ControlNet(nn.Module):
                     self_attn[t.item()] = {}
                     for name, module in self.unet.named_modules():
                         module_name = type(module).__name__
-                        #if module_name == "CrossAttention":
                         if "Cross" in module_name or "cross" in module_name:
                             for i, layer in enumerate(module.attentions):
                                 attn_name = f"{name}_{i}"
-                                # offload to cpu to avoid OOM
-                                cross_attn[t.item()][attn_name] = layer.transformer_blocks[0].attn2.attn_probs.detach() # .cpu()
-                                self_attn[t.item()][attn_name] = layer.transformer_blocks[0].attn1.attn_probs.detach() # .cpu()
-                                # print(attn_name, layer.transformer_blocks[0].attn2.attn_probs.shape)
-
+                                # offload to avoid OOM
+                                cross_attn[t.item()][attn_name] = layer.transformer_blocks[0].attn2.attn_probs.detach()
+                                self_attn[t.item()][attn_name] = layer.transformer_blocks[0].attn1.attn_probs.detach()
 
         imgs = self.decode_latents(latents) # [1, 3, 512, 512]
         if return_attn:
@@ -259,14 +240,6 @@ class ControlNet(nn.Module):
             return self_attn_list, cross_attn_list
         else:
             return imgs, control_images
-
-    # def get_attn_maps(self, t=181):
-    #     # NOTE: strength should be smaller than 0.8, -> total steps > 200 > 181
-    #     assert len(self.self_attn) > 0, "Please run refine() first to get the attention maps."
-    #     self_attn_list = [value for key,value in self.self_attn[t].items()]
-    #     cross_attn_list = [value for key,value in self.cross_attn[t].items()]
-
-    #     return self_attn_list, cross_attn_list
 
 
     def train_step(
@@ -287,24 +260,17 @@ class ControlNet(nn.Module):
             guidance_scale: float, the scale of the guidance
             as_latent: bool, whether the input pred_rgb is in latent space
 
-
-        
-        
         """
         torch.cuda.synchronize()
         batch_size = pred_rgb.shape[0]
         pred_rgb = pred_rgb.to(self.dtype)
-
-        # print(f"check input shape: pred_rgb {pred_rgb.shape}, control_images {control_images.shape}") # pred_rgb torch.Size([1, 3, 512, 512]), control_images torch.Size([1, 3, 512, 512])
 
         if as_latent:
             latents = F.interpolate(pred_rgb, (64, 64), mode="bilinear", align_corners=False) * 2 - 1
         else:
             # interp to 512x512 to be fed into vae.
             pred_rgb_512 = F.interpolate(pred_rgb, (512, 512), mode="bilinear", align_corners=False)
-            # encode image into latents with vae, requires grad!
             latents = self.encode_imgs(pred_rgb_512) # [1, 4, 64, 64]
-        
         
         if control_images is not None:
             # ControlNet takes a normal map in BAE convention (red - left, green - up, blue - front), range [0, 1]
@@ -318,19 +284,17 @@ class ControlNet(nn.Module):
             t = torch.full((batch_size,), t, dtype=torch.long, device=self.device)
         else:
             t = torch.randint(self.min_step, self.max_step + 1, (batch_size,), dtype=torch.long, device=self.device)
-        # print(f"Sample timestep t: {t}, type {type(t)}, shape {t.shape}, dtype {t.dtype}") # Sample timestep t: tensor([553], device='cuda:0'), type <class 'torch.Tensor'>, shape torch.Size([1]), dtype torch.int64
 
         tt = torch.cat([t] * 2).to(self.controlnet.device) # [2]
 
         # predict the noise residual with unet. NO grad!
         with torch.no_grad():
-
             # add noise
-            noise = torch.randn_like(latents) # 4 x 4 x 64 x 64
+            noise = torch.randn_like(latents)
             latents_noisy = self.scheduler.add_noise(latents, noise, t)
 
             # pred noise
-            latent_model_input = torch.cat([latents_noisy] * 2) # [2, 4, 64, 64]
+            latent_model_input = torch.cat([latents_noisy] * 2)
 
             if control_images is not None:
                 # save the original copy of control_images for logging purposes
@@ -362,7 +326,6 @@ class ControlNet(nn.Module):
                     mid_block_additional_residual=mid_block_res_sample,
                 ).sample
 
-
             else:            
                 noise_pred = self.unet(latent_model_input.to(torch.float16), tt, encoder_hidden_states=embeddings).sample
 
@@ -372,17 +335,10 @@ class ControlNet(nn.Module):
             noise_pred_cond - noise_pred_uncond
         )
 
-        # print(noise.shape, noise_pred.shape)
-
         # w(t), sigma_t^2
         w = self.alphas[t] ** 0.5 * (1 - self.alphas[t])
-        # print(w.shape)
         grad = w[:,None,None,None] * (noise_pred - noise)
         grad = torch.nan_to_num(grad)
-
-        # seems important to avoid NaN...
-        # grad = grad.clamp(-1, 1)
-
         target = (latents - grad).detach()
         loss = 0.5 * F.mse_loss(latents.float(), target, reduction='mean') / latents.shape[0]
 
@@ -486,46 +442,3 @@ class ControlNet(nn.Module):
 
         return imgs
 
-
-if __name__ == "__main__":
-    import argparse
-    import matplotlib.pyplot as plt
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("prompt", type=str)
-    parser.add_argument("--negative", default="", type=str)
-    parser.add_argument(
-        "--sd_version",
-        type=str,
-        default="2.1",
-        choices=["1.5", "2.0", "2.1"],
-        help="stable diffusion version",
-    )
-    parser.add_argument(
-        "--hf_key",
-        type=str,
-        default=None,
-        help="hugging face Stable diffusion model key",
-    )
-    parser.add_argument("--fp16", action="store_true", help="use float16 for training")
-    parser.add_argument(
-        "--vram_O", action="store_true", help="optimization for low VRAM usage"
-    )
-    parser.add_argument("-H", type=int, default=512)
-    parser.add_argument("-W", type=int, default=512)
-    parser.add_argument("--seed", type=int, default=0)
-    parser.add_argument("--steps", type=int, default=50)
-    opt = parser.parse_args()
-
-    seed_everything(opt.seed)
-
-    device = torch.device("cuda")
-    raise NotImplementedError("This is copied from sd_utils.py, but not adapted to ControlNet yet.")
-
-    sd = StableDiffusion(device, opt.fp16, opt.vram_O, opt.sd_version, opt.hf_key)
-
-    imgs = sd.prompt_to_img(opt.prompt, opt.negative, opt.H, opt.W, opt.steps)
-
-    # visualize image
-    plt.imshow(imgs[0])
-    plt.show()

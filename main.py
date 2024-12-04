@@ -64,7 +64,7 @@ class GUI:
         if self.opt.negative_prompt is not None:
             self.negative_prompt = self.opt.negative_prompt
 
-        self.vis_modes = ["controlnet_refined_images", "controlnet_control_images", "rendered_lambertians", "rendered_albedos", "rendered_target_albedos", "rendered_perturb_normals", "rendered_target_perturb_normals", "rendered_guidance_perturb_normals", "rendered_target_perturb_normal2s", "rendered_guidance_perturb_normal2s", "rendered_albedos_patch", "rendered_target_albedos_patch", "rendered_labels", "rendered_labels_patch", "rendered_masks_patch", "seg_masks_partA", "seg_masks_partB", "seg_masks_partA_rendered", "seg_masks_partB_rendered", "seg_masks_partA_rendered_patch", "seg_masks_partB_rendered_patch"]
+        self.vis_modes = ["controlnet_refined_images", "controlnet_control_images", "rendered_lambertians", "rendered_albedos", "rendered_target_albedos", "rendered_perturb_normals", "rendered_target_perturb_normals", "rendered_guidance_perturb_normals", "rendered_target_perturb_normal2s", "rendered_guidance_perturb_normal2s", "rendered_albedos_patch", "rendered_target_albedos_patch", "rendered_labels", "rendered_labels_patch", "rendered_masks", "rendered_masks_patch", "seg_masks_partA", "seg_masks_partB", "seg_masks_partA_rendered", "seg_masks_partB_rendered", "seg_masks_partA_rendered_patch", "seg_masks_partB_rendered_patch"]
         # TODO: check for step_vis_dict, how we convert rendered_masks_patch to seg_masks_partA and seg_masks_partB
         print(f"Initialized GUI, prompt: {self.prompt}, negative_prompt: {self.negative_prompt}")
 
@@ -104,21 +104,21 @@ class GUI:
 
         if self.guidance_tactile is None and self.opt.lambda_tactile_guidance > 0:
             # Texture Dreambooth with multi-step denoising. It is used to refine rendered tactile patches.
-            from guidance.tactile_guidance_utils import TactileLoRA
+            from guidance.tactile_guidance_utils import TextureDreambooth
             if self.opt.tactile_lora_dir is None:
                 self.opt.tactile_lora_dir = f"lora_{self.opt.tactile_texture_object.lower()}_sks_20241022"
             print(f"[INFO] loading TactileGuidance from lora dir {self.opt.tactile_lora_dir}")
             tactile_lora_parent_dir = "/data/ruihan/projects/peft/examples/lora_dreambooth/output/"
             # TODO: change the lora paths
-            self.guidance_tactile = TactileLoRA(device=self.device, fp16=False, sd_version="1.4", lora_dir=osp.join(tactile_lora_parent_dir, self.opt.tactile_lora_dir))
-            # the TactileLoRA is trained per texture with "sks normal map" as the input text
+            self.guidance_tactile = TextureDreambooth(device=self.device, fp16=False, sd_version="1.4", lora_dir=osp.join(tactile_lora_parent_dir, self.opt.tactile_lora_dir))
+            # the TextureDreambooth is trained per texture with "sks normal map" as the input text
             self.guidance_tactile.get_text_embeds(["sks normal map"], [""])
 
             if self.opt.num_part_label > 0:
                 # load a second Texture Dreambooth for multi-part texture generation
                 self.opt.tactile_lora_dir_partB = f"lora_{self.opt.texture2_name.lower()}_sks_20241022"
                 print(f"[INFO] loading 2nd TactileGuidance from lora dir {self.opt.tactile_lora_dir_partB}")
-                self.guidance_tactile_partB = TactileLoRA(device=self.device, fp16=False, sd_version="1.4", lora_dir=osp.join(tactile_lora_parent_dir, self.opt.tactile_lora_dir_partB))
+                self.guidance_tactile_partB = TextureDreambooth(device=self.device, fp16=False, sd_version="1.4", lora_dir=osp.join(tactile_lora_parent_dir, self.opt.tactile_lora_dir_partB))
                 self.guidance_tactile_partB.get_text_embeds(["sks normal map"], [""])
             
             print(f"[INFO] loaded TactileGuidance!")

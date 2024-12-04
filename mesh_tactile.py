@@ -4,19 +4,10 @@ import torch
 import trimesh
 import numpy as np
 import torch.nn.functional as F
-from copy import deepcopy
 from utils import dot, safe_normalize, cross
 import time
 import argparse
 import pdb
-
-### ChangeLog ###
-# 20240315: add a tactile normal map to the Mesh class 
-# 20240320: add a tactile displacement map to the Mesh class
-# 20240411: add a "part label" map to the Mesh class, used for semantic segmentation
-# 20240412: add a SAM texture map to the Mesh class
-# 20240418: add a displacement map to allow the base geometry to adapt to the added tactile texture
-
 
 class Mesh:
     """
@@ -38,9 +29,6 @@ class Mesh:
         tactile_normal=None,
         metallicRoughness=None,
         vc=None, # vertex color
-        # label_map=None,
-        SAM_features=None,
-        nc_SAM=200, # depend on sam_predictor.model.image_encoder
         device=None,
         opt=None,
         texture_map_size=1024,
@@ -54,13 +42,14 @@ class Mesh:
             fn (Optional[Tensor]): faces for normals, int [M, 3]. Defaults to None.
             vt (Optional[Tensor]): vertex uv coordinates, float [N, 2]. Defaults to None.
             ft (Optional[Tensor]): faces for uvs, int [M, 3]. Defaults to None.
-            vc (Optional[Tensor]): vertex colors, float [N, 3]. Defaults to None.
-            tactile_normal (Optional[Tensor]): tactile normal map, float [H, W, 3]. Defaults to None.
-            label_map (Optional[Tensor]): label map, int [H, W, 1]. Used for semantic segmentation. Defaults to None.
-            SAM_texture (Optional[Tensor]): SAM texture map, float [H, W, 256], Defaults to None.
+            v_tangent (Optional[Tensor]): vertex tangent space, float [N, 3]. Defaults to None.
             albedo (Optional[Tensor]): albedo texture, float [H, W, 3], RGB format. Defaults to None.
+            tactile_normal (Optional[Tensor]): tactile normal map, float [H, W, 3]. Defaults to None.
             metallicRoughness (Optional[Tensor]): metallic-roughness texture, float [H, W, 3], metallic(Blue) = metallicRoughness[..., 2], roughness(Green) = metallicRoughness[..., 1]. Defaults to None.
+            vc (Optional[Tensor]): vertex colors, float [N, 3]. Defaults to None.
             device (Optional[torch.device]): torch device. Defaults to None.
+            opt (Optional[argparse.Namespace]): options. Defaults to None.
+            texture_map_size (int, optional): size of the texture map. Defaults to 1024.
         """        
         self.device = device
         self.v = v # vertices
@@ -70,16 +59,9 @@ class Mesh:
         self.fn = fn # face normals 
         self.ft = ft # face uv
         self.v_tangent = v_tangent # vertex tangent space
-        # only support a single albedo
         self.albedo = albedo
         self.tactile_normal = tactile_normal
-        # support vertex color if no albedo
-        self.vc = vc
-
-        # SAM texture map
-        self.SAM_features = SAM_features
-        self.nc_SAM = nc_SAM
-        # TODO: create a boolean variable to decide whether to use SAM features. If so, initialize the SAM feature map somewhere.
+        self.vc = vc # support vertex color if no albedo
 
         # pbr extension, metallic(Blue) = metallicRoughness[..., 2], roughness(Green) = metallicRoughness[..., 1]
         # ref: https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html
@@ -120,7 +102,6 @@ class Mesh:
         else:
             mesh = cls.load_trimesh(path, **kwargs, opt=opt)
 
-        
         # Load options from the renderer
         if opt is not None:
             if mesh.opt is None:
@@ -128,8 +109,7 @@ class Mesh:
             else:
                 mesh.opt.update(opt)
 
-
-        print(f"[Mesh loading] v: {mesh.v.shape}, f: {mesh.f.shape}") # v: torch.Size([19882, 3]), f: torch.Size([35972, 3])
+        print(f"[Mesh loading] v: {mesh.v.shape}, f: {mesh.f.shape}")
         # auto-normalize
         if resize:
             print(f"auto_size ...")
@@ -149,28 +129,6 @@ class Mesh:
             start_time = time.time()
             mesh.auto_uv(cache_path=path)
             print(f"[INFO] load mesh, auto_uv: {time.time() - start_time:.4f}s")
-
-            # # Before auto_uv, vmapping, v shape torch.Size([118570, 3]), vc shape torch.Size([118570, 3]), vn shape torch.Size([118570, 3])
-            # # After auto_uv, vmapping, v shape torch.Size([177946, 3]), vc shape torch.Size([177946, 3]), vn shape torch.Size([177946, 3]), vt shape torch.Size([177946, 2])
-            # if mesh.albedo is None:
-            #     # convert vertex color to albedo map
-            #     print(f"[load_obj] convert vertex color to albedo map!")
-            #     texture_map_dim = 256
-            #     albedo = torch.from_numpy(np.ones((texture_map_dim, texture_map_dim, 3), dtype=np.float32) * np.array([0.5, 0.5, 0.5]))
-            #     # Rasterize vertex colors onto the texture image
-            #     for i in range(len(mesh.vt)):
-            #         u, v = mesh.vt[i]
-            #         color = mesh.vc[i]
-            #         albedo[int(u * texture_map_dim), int(v * texture_map_dim)] = color
-            #     mesh.albedo = albedo.to(mesh.device)
-            #     # save a copy of the albedo map for debugging purpose
-            #     output_path = path.replace(".obj", "_albedo.png")
-            #     print(f"save a copy of albedo map to {output_path}")
-            #     # interpolate the image
-            #     # albedo = cv2.resize(albedo.cpu().numpy(), (texture_map_dim, texture_map_dim), interpolation=cv2.INTER_LANCZOS4)
-            #     albedo = (albedo * 255).astype(np.uint8)
-            #     cv2.imwrite(output_path, cv2.cvtColor(albedo, cv2.COLOR_RGB2BGR)) 
-            #     raise ValueError("stop here to check albedo map converted from vertex color")
 
         # rotate front dir to +z
         if front_dir != "+z":
@@ -212,12 +170,9 @@ class Mesh:
         tactile_normal = tactile_normal.astype(np.float32) / 255.0 # shape [1024, 1024, 3], range [0, 1]
         # convert range [0, 1] to [-1, 1]
         tactile_normal = tactile_normal * 2.0 - 1.0 
-        # check the norm of the normal vector is 1 at each pixel location
         tactile_normal_norm = np.linalg.norm(tactile_normal, axis=-1)
-        print(f"tactile_normal_norm: min {tactile_normal_norm.min()}, max {tactile_normal_norm.max()}")
-        # assert np.allclose(tactile_normal_norm, 1.0, atol=1e-3), f"tactile_normal_norm: min {tactile_normal_norm.min()}, max {tactile_normal_norm.max()}" # AssertionError: tactile_normal_norm: min 0.9873868227005005, max 1.0092612504959106
 
-        # 2024-04-18 if opt.texture_crop_ratio is provided, crop the texture (more flexibility to match the texture with mesh's physical scale)
+        # if opt.texture_crop_ratio is provided, crop the texture (more flexibility to match the texture with mesh's physical scale)
         crop_size = int(tactile_normal.shape[0] * texture_crop_ratio)
         print(f"center crop tactile texture from {tactile_normal.shape} to size ({crop_size}, {crop_size}), texture_crop_ratio = {texture_crop_ratio}")
         start_h = (tactile_normal.shape[0] - crop_size) // 2
@@ -228,20 +183,6 @@ class Mesh:
         tactile_normal = cv2.resize(tactile_normal, (new_size, new_size), interpolation=cv2.INTER_LANCZOS4)
         print(f"resize tactile texture to {tactile_normal.shape}")
         return tactile_normal
-
-        # # Load the grayscale tactile displacement map
-        # # TODO: the heightmap is normalized from physical scale to [0, 1]. consider to save the physical scaling parameter if you load multiple textures.
-        # tactile_displacement_path = tactile_normal_path.replace("_normal.png", "_displacement.png")
-        # tactile_displacement = cv2.imread(tactile_displacement_path, cv2.IMREAD_GRAYSCALE)
-        # tactile_displacement = tactile_displacement.astype(np.float32) / 255.0 # shape [1024, 1024]
-        # if hasattr(opt, "texture_crop_ratio"):
-        #     tactile_displacement = tactile_displacement[start_h:start_h+crop_size, start_w:start_w+crop_size]
-        #     tactile_displacement = cv2.resize(tactile_displacement, (new_size, new_size), interpolation=cv2.INTER_LANCZOS4)
-
-        # # make sure the size is the same
-        # assert tactile_normal.shape[:2] == tactile_displacement.shape[:2], f"Different texture map size: tactile_normal: {tactile_normal.shape}, tactile_displacement: {tactile_displacement.shape}"
-
-        # return tactile_normal, tactile_displacement
 
     @classmethod
     def load_label_map(cls, label_map_path, texture_crop_ratio=1.0):
@@ -476,7 +417,6 @@ class Mesh:
             texture_crop_ratio = opt.texture_crop_ratio if hasattr(opt, "texture_crop_ratio") else 1.0
             tactile_normal = cls.load_tactile_texture(tactile_normal_path=opt.tactile_normal_path, texture_crop_ratio=texture_crop_ratio)
             mesh.tactile_normal = torch.tensor(tactile_normal, dtype=torch.float32, device=device)
-            # mesh.tactile_displacement = torch.tensor(tactile_displacement, dtype=torch.float32, device=device)
             print(f"[load_obj] load tactile normal: type {type(mesh.tactile_normal)} shape {mesh.tactile_normal.shape}, range min {mesh.tactile_normal.min()}, max {mesh.tactile_normal.max()}, dtype {mesh.tactile_normal.dtype}") # type <class 'torch.Tensor'> shape torch.Size([1024, 1024, 3]), range min -1.0, max 1.0, dtype torch.float32 # the perturbation should be in the range of [-1, 1]
 
             if hasattr(opt, "num_part_label") and opt.num_part_label > 0 :
@@ -519,103 +459,8 @@ class Mesh:
         """
         print(f"load mesh using load_obj")
         raise NotImplementedError("load_trimesh is not implemented fully yet for tactile loading !")
-        mesh = cls()
 
-        # device
-        if device is None:
-            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-        mesh.device = device
-
-        # use trimesh to load ply/glb
-        _data = trimesh.load(path)
-        # always convert scene to mesh, and apply all transforms...
-        if isinstance(_data, trimesh.Scene):
-            print(f"[INFO] load trimesh: concatenating {len(_data.geometry)} meshes.")
-            _concat = []
-            # loop the scene graph and apply transform to each mesh
-            scene_graph = _data.graph.to_flattened() # dict {name: {transform: 4x4 mat, geometry: str}}
-            for k, v in scene_graph.items():
-                name = v['geometry']
-                if name in _data.geometry and isinstance(_data.geometry[name], trimesh.Trimesh):
-                    transform = v['transform']
-                    _concat.append(_data.geometry[name].apply_transform(transform))
-            _mesh = trimesh.util.concatenate(_concat)
-        else:
-            _mesh = _data
-        
-        if _mesh.visual.kind == 'vertex':
-            vertex_colors = _mesh.visual.vertex_colors
-            vertex_colors = np.array(vertex_colors[..., :3]).astype(np.float32) / 255
-            mesh.vc = torch.tensor(vertex_colors, dtype=torch.float32, device=device)
-            print(f"[INFO] load trimesh: use vertex color: {mesh.vc.shape}")
-        elif _mesh.visual.kind == 'texture':
-            _material = _mesh.visual.material
-            if isinstance(_material, trimesh.visual.material.PBRMaterial):
-                texture = np.array(_material.baseColorTexture).astype(np.float32) / 255
-                # load metallicRoughness if present
-                if _material.metallicRoughnessTexture is not None:
-                    metallicRoughness = np.array(_material.metallicRoughnessTexture).astype(np.float32) / 255
-                    mesh.metallicRoughness = torch.tensor(metallicRoughness, dtype=torch.float32, device=device).contiguous()
-            elif isinstance(_material, trimesh.visual.material.SimpleMaterial):
-                texture = np.array(_material.to_pbr().baseColorTexture).astype(np.float32) / 255
-            else:
-                raise NotImplementedError(f"material type {type(_material)} not supported!")
-            mesh.albedo = torch.tensor(texture[..., :3], dtype=torch.float32, device=device).contiguous()
-            print(f"[INFO] load trimesh: load texture: {texture.shape}")
-        else:
-            texture = np.ones((1024, 1024, 3), dtype=np.float32) * np.array([0.5, 0.5, 0.5])
-            mesh.albedo = torch.tensor(texture, dtype=torch.float32, device=device)
-            print(f"[load_trimesh] failed to load texture.")
-        
-        tactile_normal, tactile_displacement = cls.load_tactile_texture()
-        mesh.tactile_normal = torch.tensor(tactile_normal, dtype=torch.float32, device=device)
-        mesh.tactile_displacement = torch.tensor(tactile_displacement, dtype=torch.float32, device=device)
-        print(f"[load_trimesh] load tactile normal: shape {tactile_normal.shape}, range min {tactile_normal.min()}, max {tactile_normal.max()}, dtype {tactile_normal.dtype}")
-        print(f"[load_trimesh] load tactile displacement: shape {tactile_displacement.shape}, range min {tactile_displacement.min()}, max {tactile_displacement.max()}, dtype {tactile_displacement.dtype}")
-
-        vertices = _mesh.vertices
-
-        try:
-            texcoords = _mesh.visual.uv
-            texcoords[:, 1] = 1 - texcoords[:, 1]
-        except Exception as e:
-            texcoords = None
-
-        try:
-            normals = _mesh.vertex_normals
-        except Exception as e:
-            normals = None
-
-        # trimesh only support vertex uv...
-        faces = tfaces = nfaces = _mesh.faces
-
-        mesh.v = torch.tensor(vertices, dtype=torch.float32, device=device)
-        mesh.vt = (
-            torch.tensor(texcoords, dtype=torch.float32, device=device)
-            if texcoords is not None
-            else None
-        )
-        mesh.vn = (
-            torch.tensor(normals, dtype=torch.float32, device=device)
-            if normals is not None
-            else None
-        )
-
-        mesh.f = torch.tensor(faces, dtype=torch.int32, device=device)
-        mesh.ft = (
-            torch.tensor(tfaces, dtype=torch.int32, device=device)
-            if texcoords is not None
-            else None
-        )
-        mesh.fn = (
-            torch.tensor(nfaces, dtype=torch.int32, device=device)
-            if normals is not None
-            else None
-        )
-
-        return mesh
-
+  
     # sample surface (using trimesh)
     def sample_surface(self, count: int):
         """sample points on the surface of the mesh.
@@ -690,49 +535,6 @@ class Mesh:
         print(f"[INFO] auto_tangent: {time.time() - start_time:.4f}s")
 
 
-
-    # def auto_tangent(self):
-
-    #     tangents = torch.zeros_like(self.v)  # Initialize tangents array
-    #     tangent_count = torch.zeros(self.v.shape[0], dtype=torch.int32)
-    #     bitangents = torch.zeros_like(self.v)  # Initialize bitangents array
-
-    #     # Iterate over each face in the mesh
-    #     for f in range(self.f.shape[0]):
-    #         # Retrieve vertices and texture coordinates of the current face
-    #         vertex_indices = self.f[f]
-    #         texcoord_indices = self.ft[f]
-    #         vertices = self.v[vertex_indices]
-    #         texcoords = self.vt[texcoord_indices]
-
-    #         # Calculate differences in position and texture coordinates
-    #         delta_pos1 = vertices[1] - vertices[0]
-    #         delta_pos2 = vertices[2] - vertices[0]
-    #         delta_uv1 = texcoords[1] - texcoords[0
-    #         delta_uv2 = texcoords[2] - texcoords[0]
-
-    #         # Calculate tangent and bitangent for the current face
-    #         tangent = (delta_pos1 * delta_uv2[1] - delta_pos2 * delta_uv1[1]) / \
-    #                 (delta_uv1[0] * delta_uv2[1] - delta_uv1[1] * delta_uv2[0])
-    #         bitangent = (delta_pos2 * delta_uv1[0] - delta_pos1 * delta_uv2[0]) / \
-    #                     (delta_uv1[0] * delta_uv2[1] - delta_uv1[1] * delta_uv2[0])
-
-    #         # Accumulate tangent and bitangent for each vertex of the current face
-    #         for i, vertex_index in enumerate(vertex_indices):
-    #             tangents[vertex_index] += tangent
-    #             bitangents[vertex_index] += bitangent
-    #             tangent_count[vertex_index] += 1
-            
-    #     print(f"check tangent_count, {tangent_count.shape}")
-    #     print(tangent_count[:20])
-    #     raise ValueError("stop here to check tangent_count")
-    #     # Normalize tangent and bitangent vectors
-    #     tangents = F.normalize(tangents, dim=1)
-    #     tangents = F.normalize(tangents - dot(tangents, self.vn) * self.vn)
-
-    #     self.v_tangent = tangents
-
-
     def auto_tangent(self):
         """
         Compute per-vertex tangent space basis.
@@ -769,7 +571,6 @@ class Mesh:
             denom > 0.0, torch.clamp(denom, min=1e-6), torch.clamp(denom, max=-1e-6)
         )
 
-
         # Update all 3 vertices
         for i in range(0, 3):
             idx = vn_idx[i][:, None].repeat(1, 3).type(torch.int64)
@@ -793,19 +594,6 @@ class Mesh:
             assert torch.all(torch.isfinite(tangents))
 
         self.v_tangent = tangents
-
-
-
-    # def auto_tangent(self):
-    #     """
-    #     Compute per-vertex tangent space basis.
-    #     Ref: https://arxiv.org/pdf/2402.05919.pdf
-    #     """        
-    #     p = self.v
-    #     n = self.vn
-    #     tn = torch.stack([-p[:, 2], torch.zeros_like(p[:, 1]), p[:, 0]], dim=-1) 
-    #     t = torch.cross(n, torch.cross(tn, n, dim=-1), dim=-1)
-    #     self.v_tangent = safe_normalize(t)
         
 
     def auto_uv(self, cache_path=None, vmap=True):
@@ -848,6 +636,7 @@ class Mesh:
             vmapping = torch.from_numpy(vmapping.astype(np.int64)).long().to(self.device)
             self.align_v_to_vt(vmapping)
     
+
     def align_v_to_vt(self, vmapping=None):
         """ remap v/f and vn/fn to vt/ft.
 
@@ -880,13 +669,13 @@ class Mesh:
             Mesh: self.
         """
         self.device = device
-        # TODO: add the full list of attributes here to move every attributes to device 
         for name in ["v", "f", "vn", "fn", "vt", "ft", "albedo"]:
             tensor = getattr(self, name)
             if tensor is not None:
                 setattr(self, name, tensor.to(device))
         return self
     
+
     def write(self, path):
         """write the mesh to a path.
 
@@ -899,8 +688,6 @@ class Mesh:
             self.write_ply(path)
         elif path.endswith(".obj"):
             self.write_obj(path)
-        elif path.endswith(".glb") or path.endswith(".gltf"):
-            self.write_glb(path)
         else:
             raise NotImplementedError(f"format {path} not supported!")
     
@@ -921,141 +708,6 @@ class Mesh:
         _mesh = trimesh.Trimesh(vertices=v_np, faces=f_np)
         _mesh.export(path)
 
-
-    def write_glb(self, path):
-        """write the mesh in glb/gltf format.
-          This will create a scene with a single mesh.
-
-        Args:
-            path (str): path to write.
-        """
-
-        assert self.vn is not None and self.vt is not None # should be improved to support export without texture...
-
-        # assert self.v.shape[0] == self.vn.shape[0] and self.v.shape[0] == self.vt.shape[0]
-        if self.vt is not None and self.v.shape[0] != self.vt.shape[0]:
-            self.align_v_to_vt()
-
-        # assume f == fn == ft
-
-        import pygltflib
-
-        f_np = self.f.detach().cpu().numpy().astype(np.uint32)
-        f_np_blob = f_np.flatten().tobytes()
-
-        v_np = self.v.detach().cpu().numpy().astype(np.float32)
-        v_np_blob = v_np.tobytes()
-
-        blob = f_np.flatten().tobytes()
-        v_np_blob = v_np.tobytes()
-        # vn_np_blob = vn_np.tobytes()
-        vt_np_blob = vt_np.tobytes()
-        albedo_blob = cv2.imencode('.png', albedo)[1].tobytes()
-
-        gltf = pygltflib.GLTF2(
-            scene=0,
-            scenes=[pygltflib.Scene(nodes=[0])],
-            nodes=[pygltflib.Node(mesh=0)],
-            meshes=[pygltflib.Mesh(primitives=[
-                pygltflib.Primitive(
-                    # indices to accessors (0 is triangles)
-                    attributes=pygltflib.Attributes(
-                        POSITION=1, TEXCOORD_0=2, 
-                    ),
-                    indices=0, material=0,
-                )
-            ])],
-            materials=[
-                pygltflib.Material(
-                    pbrMetallicRoughness=pygltflib.PbrMetallicRoughness(
-                        baseColorTexture=pygltflib.TextureInfo(index=0, texCoord=0),
-                        metallicFactor=0.0,
-                        roughnessFactor=1.0,
-                    ),
-                    alphaCutoff=0,
-                    doubleSided=True,
-                )
-            ],
-            textures=[
-                pygltflib.Texture(sampler=0, source=0),
-            ],
-            samplers=[
-                pygltflib.Sampler(magFilter=pygltflib.LINEAR, minFilter=pygltflib.LINEAR_MIPMAP_LINEAR, wrapS=pygltflib.REPEAT, wrapT=pygltflib.REPEAT),
-            ],
-            images=[
-                # use embedded (buffer) image
-                pygltflib.Image(bufferView=3, mimeType="image/png"),
-            ],
-            buffers=[
-                pygltflib.Buffer(byteLength=len(f_np_blob) + len(v_np_blob) + len(vt_np_blob) + len(albedo_blob))
-            ],
-            # buffer view (based on dtype)
-            bufferViews=[
-                # triangles; as flatten (element) array
-                pygltflib.BufferView(
-                    buffer=0,
-                    byteLength=len(f_np_blob),
-                    target=pygltflib.ELEMENT_ARRAY_BUFFER, # GL_ELEMENT_ARRAY_BUFFER (34963)
-                ),
-                # positions; as vec3 array
-                pygltflib.BufferView(
-                    buffer=0,
-                    byteOffset=len(f_np_blob),
-                    byteLength=len(v_np_blob),
-                    byteStride=12, # vec3
-                    target=pygltflib.ARRAY_BUFFER, # GL_ARRAY_BUFFER (34962)
-                ),
-                # texcoords; as vec2 array
-                pygltflib.BufferView(
-                    buffer=0,
-                    byteOffset=len(f_np_blob) + len(v_np_blob),
-                    byteLength=len(vt_np_blob),
-                    byteStride=8, # vec2
-                    target=pygltflib.ARRAY_BUFFER,
-                ),
-                # texture; as none target
-                pygltflib.BufferView(
-                    buffer=0,
-                    byteOffset=len(f_np_blob) + len(v_np_blob) + len(vt_np_blob),
-                    byteLength=len(albedo_blob),
-                ),
-            ],
-            accessors=[
-                # 0 = triangles
-                pygltflib.Accessor(
-                    bufferView=0,
-                    componentType=pygltflib.UNSIGNED_INT, # GL_UNSIGNED_INT (5125)
-                    count=f_np.size,
-                    type=pygltflib.SCALAR,
-                    max=[int(f_np.max())],
-                    min=[int(f_np.min())],
-                ),
-                # 1 = positions
-                pygltflib.Accessor(
-                    bufferView=1,
-                    componentType=pygltflib.FLOAT, # GL_FLOAT (5126)
-                    count=len(v_np),
-                    type=pygltflib.VEC3,
-                    max=v_np.max(axis=0).tolist(),
-                    min=v_np.min(axis=0).tolist(),
-                ),
-                # 2 = texcoords
-                pygltflib.Accessor(
-                    bufferView=2,
-                    componentType=pygltflib.FLOAT,
-                    count=len(vt_np),
-                    type=pygltflib.VEC2,
-                    max=vt_np.max(axis=0).tolist(),
-                    min=vt_np.min(axis=0).tolist(),
-                ),
-            ],
-        )
-
-        # set actual data
-        gltf.set_binary_blob(f_np_blob + v_np_blob + vt_np_blob + albedo_blob)
-
-        # glb = b"".join(gltf.save_to_bytes())
-        gltf.save(path)
 
     # write to obj file (geom + texture)
     def write_obj(self, path):
@@ -1145,114 +797,8 @@ class Mesh:
             label_map = (label_map * 255).astype(np.uint8)
             cv2.imwrite(label_map_path, cv2.cvtColor(label_map, cv2.COLOR_RGB2BGR))
             
-        # if self.tactile_displacement is not None:
-        #     tactile_displacement = self.tactile_displacement.detach().cpu().numpy()
-        #     np.save(tactile_displacement_path.replace(".png", ".npy"), tactile_displacement)
-        #     tactile_displacement = (tactile_displacement * 255).astype(np.uint8)
-        #     cv2.imwrite(tactile_displacement_path, tactile_displacement)
-  
         if self.metallicRoughness is not None:
             metallicRoughness = self.metallicRoughness.detach().cpu().numpy()
             metallicRoughness = (metallicRoughness * 255).astype(np.uint8)
             cv2.imwrite(metallic_path, metallicRoughness[..., 2])
             cv2.imwrite(roughness_path, metallicRoughness[..., 1])
-
-    # create eval function to be compatible with subdivide and displace functions
-    # Ref: https://github.com/NVlabs/nvdiffmodeling/blob/9b2ba2eff83c7d90127f78c20773b06ddc3ae1db/src/mesh.py#L88
-    def eval(self, params={}):
-        return self
-
-    ######################################################################################
-    # Subdivide each triangle into 4 new ones. Edge midpoint subdivision
-    ######################################################################################
-
-    def subdivide(self, steps=1):
-        raise ValueError(f"Subdivide is not supported for tactile mesh")
-
-        print(f"Running subdivide of mesh class")
-        for step in range(steps):
-            new_vtx_idx = [None] * 4
-            new_tri_idx = [None] * 4
-
-            v_attr = [self.v, self.vn, self.vt, self.v_tangent]
-            v_idx = [self.f, self.fn, self.ft, self.f]
-
-            for i, attr in enumerate(v_attr):
-                if attr is not None:
-                    tri_idx = v_idx[i].cpu().numpy()
-
-                    # Find unique edges
-                    edge_fetch_a = []
-                    edge_fetch_b = []
-                    edge_verts = {}
-                    for tri in tri_idx:
-                        for e_idx in range(0, 3):
-                            v0 = tri[e_idx]
-                            v1 = tri[(e_idx + 1) % 3]
-                            if (v0, v1) not in edge_verts.keys() and (v1, v0) not in edge_verts.keys():
-                                edge_verts[(v0, v1)] = [len(edge_fetch_a), v0, v1]
-                                edge_fetch_a += [v0]
-                                edge_fetch_b += [v1]
-
-                    # Create vertex fetch lists for computing midpoint vertices
-                    new_vtx_idx[i] = [torch.tensor(edge_fetch_a, dtype=torch.int64, device='cuda'), torch.tensor(edge_fetch_b, dtype=torch.int64, device='cuda')]
-
-                    # Create subdivided triangles
-                    new_tri_idx_i = []
-                    for tri in tri_idx:
-                        v0, v1, v2= tri
-                        h0 = (edge_verts[(v0, v1)][0] if (v0, v1) in edge_verts.keys() else edge_verts[(v1, v0)][0]) + attr.shape[0]
-                        h1 = (edge_verts[(v1, v2)][0] if (v1, v2) in edge_verts.keys() else edge_verts[(v2, v1)][0]) + attr.shape[0]
-                        h2 = (edge_verts[(v2, v0)][0] if (v2, v0) in edge_verts.keys() else edge_verts[(v0, v2)][0]) + attr.shape[0]
-                        new_tri_idx_i += [[v0, h0, h2], [h0, v1, h1], [h1, v2, h2], [h0, h1, h2]]
-                    new_tri_idx[i] = torch.tensor(new_tri_idx_i, dtype=torch.int32, device='cuda')
-
-
-            for i, attr in enumerate(v_attr):
-                if attr is not None:
-                    # Create new edge midpoint attributes
-                    edge_attr = (attr[new_vtx_idx[i][0], :] + attr[new_vtx_idx[i][1], :]) * 0.5
-                    v_attr[i] = torch.cat([attr, edge_attr], dim=0)
-                    
-                    # Copy new triangle lists
-                    v_idx[i] = new_tri_idx[i]
-
-            # Update mesh
-            self.v = v_attr[0]
-            self.f = v_idx[0]
-            self.vn = v_attr[1]
-            self.fn = v_idx[1]
-            self.vt = v_attr[2]
-            self.ft = v_idx[2]
-            self.v_tangent = v_attr[3]
-
-    
-    def displace(self, scale=1.0, displacement_mode="uv_map"):
-        """
-        displace the vertices
-        """
-        if displacement_mode == "uv_map":
-            # Displace vertices based on UV map
-            assert hasattr(self, tactile_displacement), "tactile_displacement is not loaded"
-            vd   = torch.zeros_like(self.v)
-            vd_n = torch.zeros_like(self.v)
-            for i in range(0, 3):
-                v = self.v[self.f[:, i], :] # shape [N, 3]
-                n = self.vn[self.fn[:, i], :] # shape [N, 3]
-                t = self.vt[self.ft[:, i], :].cpu().numpy() # shape [N, 2]
-                # query the displacement map to obtain per vertex displacement
-                # use t to index the displacement map
-
-                displ = self.tactile_displacement[t[:,0], t[:,1]].unsqueeze(1) # shape [N, 1]
-                v_displ = v + n * scale * displ
-
-                splat_idx = self.ft[:, i, None].repeat(1, 3).type(torch.int64)
-                vd.scatter_add_(0, splat_idx, v_displ)
-                vd_n.scatter_add_(0, splat_idx, torch.ones_like(v_displ))
-
-            # Update mesh 
-            self.v = vd / vd_n
-            self.f = self.ft
-        
-        else:
-            raise ValueError(f"displacement mode {displacement_mode} not supported!")

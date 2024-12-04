@@ -1,7 +1,5 @@
-import os
 import math
 import cv2
-import trimesh
 import numpy as np
 
 import torch
@@ -10,17 +8,12 @@ import torch.nn.functional as F
 
 import nvdiffrast.torch as dr
 from mesh_tactile import Mesh, safe_normalize
-from utils import dot, create_uv_coords
-from neural_style_field import NeuralStyleField, VanillaMLP, NetworkWithInputEncoding
-from dataclasses import dataclass, field
+from neural_style_field import NeuralStyleField
+from dataclasses import field
+from utils import dot
 import time
 import pdb
 
-### ChangeLog ###
-# 20240315: add a tactile texture map to the renderer 
-# 20240411: add "part label" map to the renderer. The label map is used to map different parts of the object to different tactile textures.
-# 20240412: instead of rendering "part label", we render SAM features. 
-# 20240421: add options to use field representations for albedo and tactile texture
 
 def scale_img_nhwc(x, size, mag='bilinear', min='bilinear'):
     assert (x.shape[1] >= size[0] and x.shape[2] >= size[1]) or (x.shape[1] < size[0] and x.shape[2] < size[1]), "Trying to magnify image in one dimension and minify in the other"
@@ -51,7 +44,6 @@ def trunc_rev_sigmoid(x, eps=1e-6):
 def make_divisible(x, m=8):
     return int(math.ceil(x / m) * m)
 
-
 def uv_padding(image, hole_mask, xatlas_pack_options=field(default_factory=dict)):
     # ref: https://github.com/threestudio-project/threestudio/blob/cd462fb0b73a89b6be17160f7802925fe6cf34cd/threestudio/models/exporters/mesh_exporter.py#L93
    
@@ -76,31 +68,17 @@ def uv_padding(image, hole_mask, xatlas_pack_options=field(default_factory=dict)
     return torch.from_numpy(inpaint_image).to(image)
 
 
-
 class Renderer(nn.Module):
     def __init__(self, opt):
         
         super().__init__()
 
         self.opt = opt
-
         self.mesh = Mesh.load(self.opt.mesh, resize=False, opt=self.opt)
+        self.device = self.mesh.v.device
         print(f"Loaded mesh from {self.opt.mesh} N_v {len(self.mesh.v)} N_f {len(self.mesh.f)}") # N_v 19882 N_f 35972
-
         self.glctx = dr.RasterizeGLContext()
-        # self.glctx = dr.RasterizeCudaContext()
         
-        # extract trainable parameters
-        self.v_offsets = nn.Parameter(torch.zeros_like(self.mesh.v))
-
-        self.device = self.v_offsets.device
-        
-        # Try initializing the mesh albedo map with grayscale color during refinement
-        # print(f"check mesh.albedo shape {self.mesh.albedo.shape}, range [{self.mesh.albedo.min()},{self.mesh.albedo.max()}], dtype {self.mesh.albedo.dtype} device {self.mesh.albedo.device}")
-
-        # check mesh.albedo shape torch.Size([1024, 1024, 3]), range [0.0,0.49803921580314636], dtype torch.float32 device cuda:0
-        # check raw_albedo parameter for mesh renderer, shape torch.Size([1024, 1024, 3]), range [-13.815509796142578,-0.007843117229640484], dtype torch.float32 device cuda:0
-
         # create a field to represent albedo and tactile texture
         self.texture_field = NeuralStyleField(
             width=64, 
@@ -112,19 +90,11 @@ class Renderer(nn.Module):
             color_output_dim=3,
             normal_output_dim=3,
             label_output_dim=2, # NOTE: label_output_dim should be the same number of labels/parts
-            num_frequencies=self.opt.num_frequencies,
-            min_freq = 0.0,
-            max_freq = self.opt.max_freq,
-            use_tcnn_encoding = self.opt.use_tcnn_encoding,
             print_model = False,
         ).to(self.device)
 
-
-
         self.query_texture() # set up self.raw_albedo and self.tactile_normal
-
-
-        # Set the target albdeo and tactile normal map for 1. initialization and 2. regularization during refinement
+        # Use the target albdeo and tactile normal map for 1. initialization and 2. regularization during refinement
         # Here use uv map as the target representations
         self.target_albedo = self.mesh.albedo.clone()
         
@@ -147,18 +117,10 @@ class Renderer(nn.Module):
         else:
             # we don't have tactile texture, create a dummy target_perturb_normal
             self.target_perturb_normal = torch.tensor([0, 0, 1], dtype=torch.float32).unsqueeze(0).unsqueeze(0).unsqueeze(0).to(self.device)
-            # TODO: check shape and see whether we need it at all
-        
 
-        
 
     def query_texture(self, use_uv_padding=False):
         # Ref: threestudio mesh_exporter.py https://github.com/threestudio-project/threestudio/blob/cd462fb0b73a89b6be17160f7802925fe6cf34cd/threestudio/models/exporters/mesh_exporter.py#L72
-        # v_tex - mesh.vt
-        # t_tex_indices - mesh.ft
-
-        print(f"In query_texture for 3dfield")
-        # print("check self.mesh.vt shape {self.mesh.vt.shape} range [{self.mesh.vt.min()},{self.mesh.vt.max()}], self.meth.ft shape {self.mesh.ft.shape} range [{self.mesh.ft.min()},{self.mesh.ft.max()}]") # self.mesh.vt shape torch.Size([177946, 2]) range [0.0,0.999605655670166], self.meth.ft shape torch.Size([237140, 3]) range [0, 177945]
 
         # convert range to [-1, 1]
         uv_clip = self.mesh.vt * 2 - 1 # shape [N_v, 2]
@@ -200,10 +162,8 @@ class Renderer(nn.Module):
                 self.tactile_normal = (self.tactile_normal + 1) / 2
                 self.tactile_normal = uv_padding(self.tactile_normal, hole_mask)
                 # convert back to [-1, 1] range
-                self.tactile_normal = self.tactile_normal * 2 - 1
-            print(f"Finish UV padding in {time.time() - start_time} seconds")
-            # shape [1024, 1024, 3], range [-1, 1]
-
+                self.tactile_normal = self.tactile_normal * 2 - 1 # shape [1024, 1024, 3], range [-1, 1]
+            print(f"Finish UV padding in {time.time() - start_time} seconds") 
 
 
     def get_params(self):
@@ -213,15 +173,8 @@ class Renderer(nn.Module):
 
     @torch.no_grad()
     def export_mesh(self, save_path):
-        # save v_offsets for debugging
-        v_offsets = self.v_offsets.detach().cpu().numpy()
-        output_path = save_path.replace('.obj', '_v_offsets.npy')
-        print(f"Saving v_offsets to {output_path}")
-        np.save(output_path, v_offsets)
-
-        self.mesh.v = (self.mesh.v + self.v_offsets).detach()
-
         # export 3d texture field to uv map for exporting
+        self.mesh.v = self.mesh.v.detach()
         self.query_texture(use_uv_padding=True)
         self.mesh.albedo = self.raw_albedo.detach()
         self.mesh.label_map = self.label_map.detach()
@@ -259,8 +212,6 @@ class Renderer(nn.Module):
         v_clip = v_cam @ proj.T
         rast, rast_db = dr.rasterize(self.glctx, v_clip, self.mesh.f, (h, w))
         mask = (rast[0, ..., 3:] > 0).float().unsqueeze(0) # [1, H, W, 1], range [0, 1]
-        mask_aa = dr.antialias(mask, rast, v_clip, self.mesh.f).squeeze(0) # [H, W, 1], range [0, 1]
-        selector = mask[..., 0] # foreground mask, shape [1, H, W], range [0, 1]
 
         #############################
         # Interpolate attributes
@@ -273,9 +224,6 @@ class Renderer(nn.Module):
         # interpolate vertex position
         v_pos, _ = dr.interpolate(v.unsqueeze(0), rast, self.mesh.f) # [1, H, W, 3], range [-1, 1]
         H, W = v_pos.shape[1:3]
-
-        # For 2d/3d field representation, but self.raw_albedo and self.tactile_normal are not used in render() function; they are only used in exporting mesh (for now)
-        # self.query_texture() # udpate self.raw_albedo and self.tactile_normal, 
         
         # first interpoalte the mesh vertices pos (done above), then run forward pass of the texture field
         rendered_texture = self.texture_field(v_pos.view(-1, 3)).view(-1, v_pos.shape[1], v_pos.shape[2], 8) # shape: [1, H, W, 8]
@@ -284,14 +232,12 @@ class Renderer(nn.Module):
             perturb_normal = rendered_texture[..., 3:6].contiguous()
         label_map = rendered_texture[..., 6:].contiguous() # [1, H, W, 1], torch.float32
 
-    
         # Render target_albedo and target_tactile_normal for regularization of rendered views. 
         target_albedo = dr.texture(self.target_albedo.unsqueeze(0), texc, uv_da=texc_db, filter_mode=texture_filter) # [1, H, W, 3]
         if self.opt.load_tactile:
             target_perturb_normal = dr.texture(self.target_perturb_normal.unsqueeze(0), texc, uv_da=texc_db, filter_mode=texture_filter).to(torch.float32)
             if self.opt.num_part_label > 0:
                 target_perturb_normal2 = dr.texture(self.target_perturb_normal2.unsqueeze(0), texc, uv_da=texc_db, filter_mode=texture_filter).to(torch.float32)
-        
         else:
             # create a map of [0, 0, 1]
             perturb_normal = torch.tensor([0, 0, 1], dtype=torch.float32).unsqueeze(0).unsqueeze(0).unsqueeze(0).to(rast.device)
@@ -300,7 +246,6 @@ class Renderer(nn.Module):
             target_perturb_normal = perturb_normal.clone() # create a dummy target_perturb_normal
         target_perturb_normal = safe_normalize(target_perturb_normal) # shape [1, H, W, 3]
         
-        # print(f"check target map in mesh renderer. target_albedo shape {target_albedo.shape}, range [{target_albedo.min()}, {target_albedo.max()}], target_perturb_normal shape {target_perturb_normal.shape} range [{target_perturb_normal.min()}, {target_perturb_normal.max()}]") # [1, H, W, 3], range [0,1]; [1, H, W, 3], range [-1, 1]     
 
         # get vn and render normal
         vn = self.mesh.vn
@@ -319,16 +264,13 @@ class Renderer(nn.Module):
         shading_normal = safe_normalize(shading_normal.view(-1, 3))# shape [H*W, 3]
 
         # use shading_normal to create view-dependent shading
-        # 2024-04-19: set up light source for rendering
-        # TODO: currently we render one image at a time, i.e. B = 1 and no dimension for batch size. Check whether it is sufficient
+        # set up light source for rendering
         if self.opt.light_sample_strategy == "camdir":
             # create point light source at the camera position and look at the object
             light_positions = pose[:3, 3].unsqueeze(0).expand(h*w, -1) # pose shape [4, 4], shape torch.Size([36864, 3])
-            # print(f"In function render, opt.light_sample_strategy is {self.opt.light_sample_strategy}, light_positions shape {light_positions.shape}")
         
         # Modify light_sample_strategy from threestudio/data/uncond.py. In threestudio, light sampling has shape [B, 3], while here we have shape [3] then expand to [H*W, 3]
         elif self.opt.light_sample_strategy == "dreamfusion":
-            # TODO: make the params light_position_perturb and light_distance_range configurable in the opt
             # sample light direction from a normal distribution with mean camera_position and std light_position_perturb
             light_position_perturb = 1.0
             light_direction = F.normalize(pose[:3, 3] + torch.randn(3, dtype=torch.float32, device=pose.device) * light_position_perturb, dim=-1) # torch.Size([3])
@@ -376,7 +318,6 @@ class Renderer(nn.Module):
         else:
             raise ValueError(f"Unknown light_sample_strategy {self.opt.light_sample_strategy}")
 
-
         light_directions = safe_normalize(light_positions - v_pos[..., :3].view(-1, 3)) # [H*W, 3]
         diffuse_light_color = self.opt.diffuse_light_color * torch.tensor([1.0, 1.0, 1.0], dtype=torch.float32, device=light_directions.device) # shape [3]
         ambient_light_color = self.opt.ambient_light_color * torch.tensor([1.0, 1.0, 1.0], dtype=torch.float32, device=light_directions.device)
@@ -416,16 +357,13 @@ class Renderer(nn.Module):
         albedo = alpha * albedo + (1 - alpha) * bg_color
         shading_normal = dr.antialias(shading_normal, rast, v_clip, self.mesh.f).squeeze(0) # [H, W, 3]
         perturb_normal = dr.antialias(perturb_normal, rast, v_clip, self.mesh.f).squeeze(0) # [H, W, 3]
-        # User [0, 0, 1] as bg_color, resonable but less visible
-        # perturb_normal = alpha * perturb_normal + (1 - alpha) * torch.tensor([0, 0, 1], dtype=torch.float32, device=perturb_normal.device).unsqueeze(0) # [H, W, 3] 
-        # Use bg_color as bg_color, more visible
+        # using bg_color as bg_color is more visible than using [0, 0, 1]
         perturb_normal = alpha * perturb_normal + (1 - alpha) * bg_color # [H, W, 3]
         target_albedo = dr.antialias(target_albedo, rast, v_clip, self.mesh.f).squeeze(0) # [H, W, 3]
         target_albedo = alpha * target_albedo + (1 - alpha) * bg_color
         
         
         target_perturb_normal = dr.antialias(target_perturb_normal, rast, v_clip, self.mesh.f).squeeze(0)
-        # print(f"before computing target_shading_normal_viewspace, check target_perturb_normal {target_perturb_normal.shape} range [{target_perturb_normal.min()},{target_perturb_normal.max()}] ")  # torch.Size([512, 512, 3]) range [-1.0,1.0]
         target_shading_normal = tangent * target_perturb_normal[..., [0]] - bitangent * target_perturb_normal[..., [1]] + normal * target_perturb_normal[..., [2]] # [512, 512, 3]
         target_shading_normal = safe_normalize(target_shading_normal.view(-1, 3)) 
         target_shading_normal = target_shading_normal.view(-1, H, W, 3) # [1, 512, 512, 3]
@@ -486,3 +424,4 @@ class Renderer(nn.Module):
         results['label'] = label_map
 
         return results
+        

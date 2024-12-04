@@ -30,6 +30,7 @@ def aggregate_x_weights(weight_list, weight_ratio=None, device="cpu"):
 
     return aggre_weights
 
+
 def get_weight_ratio(weight_list):
     # This function assigns proportional aggergation weight 
     sizes = []
@@ -37,6 +38,7 @@ def get_weight_ratio(weight_list):
       sizes.append(np.sqrt(weights.shape[-2]))
     denom = np.sum(sizes)
     return sizes / denom
+
 
 def aggregate_weights(weight_list, weight_ratio=None, device="cpu"):
     """
@@ -76,11 +78,13 @@ def aggregate_weights(weight_list, weight_ratio=None, device="cpu"):
     
     return aggre_weights.to(torch.float32)
 
+
 def KL(X, Y):
     quotient = torch.log(X) - torch.log(Y)
     kl_1 = torch.sum(X * quotient, dim=(-2, -1)) / 2
     kl_2 = -torch.sum(Y * quotient, dim=(-2, -1)) / 2
     return kl_1 + kl_2
+
 
 def mask_merge(iter, attns, kl_threshold, grid=None):
     attns = torch.tensor(attns, dtype=torch.float32)  # Ensure dtype for PyTorch operations
@@ -117,6 +121,7 @@ def mask_merge(iter, attns, kl_threshold, grid=None):
 
     return new_attns
 
+
 def generate_sampling_grid(num_of_points):
     segment_len = 63//(num_of_points-1)
     total_len = segment_len*(num_of_points-1)
@@ -126,6 +131,7 @@ def generate_sampling_grid(num_of_points):
     x_new,y_new=np.meshgrid(x_new,y_new,indexing='ij')
     points = np.concatenate(([x_new.reshape(-1,1),y_new.reshape(-1,1)]),axis=-1).astype(int)
     return points
+
 
 def calculate_dist(self_attn_merged, cross_attn):
     '''
@@ -146,6 +152,7 @@ def calculate_dist(self_attn_merged, cross_attn):
             dist[i,j] = KL(cross_attn[i].reshape(512,512), self_attn_merged[j].reshape(512,512))
 
     return dist
+
 
 def get_semantics(pred, x_weight, voting="majority"):
     # This function assigns semantic labels to masks 
@@ -171,6 +178,7 @@ def get_semantics(pred, x_weight, voting="majority"):
             category = logit.argmax(dim=-1).item() # Get argmax and convert to item
         label_to_mask[category].append(i)
     return label_to_mask
+
 
 def seg_attn(self_attn_list, cross_attn_list, token_indices, fg_mask=None):
     """
@@ -209,4 +217,3 @@ def seg_attn(self_attn_list, cross_attn_list, token_indices, fg_mask=None):
     masks = torch.stack(masks, dim=0)
     masks = masks > 0
     return masks
-

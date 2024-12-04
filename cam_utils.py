@@ -399,3 +399,4 @@ class OrbitCamera:
         campos = np.array([x, y, z])  # [N, 3]
         rot_mat = look_at(campos, np.zeros([3], dtype=np.float32))
         self.rot = Rotation.from_matrix(rot_mat)
+        
