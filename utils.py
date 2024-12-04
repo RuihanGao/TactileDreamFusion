@@ -36,7 +36,7 @@ def create_uv_coords(texture_size, device="cpu"):
 
 
 
-def convert_images_to_video(images_json, output_path, fps=3, save_frame=False, num_frames=1, add_text=False):
+def convert_images_to_video(images_json, output_path, fps=3, save_frame=False, num_frames=1):
 
     # images = [(np.array(v).squeeze(0).transpose(1, 2, 0).astype(np.float32)*255).astype(np.uint8) for k, v in images_json.items()]
     images = [(np.array(v)[0].transpose(1, 2, 0).astype(np.float32)*255).astype(np.uint8) for k, v in images_json.items()]
@@ -50,10 +50,6 @@ def convert_images_to_video(images_json, output_path, fps=3, save_frame=False, n
     for image, index in zip(images, indexes):
         # Convert the image to BGR format
         image_bgr = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-        if add_text:
-            # Add text box with index to the image # TODO: doesn't work for video saving
-            text = f"Index: {index}"
-            cv2.putText(image_bgr, text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
         output_images.append(cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB))
 
     imageio.mimwrite(output_path, images, fps=fps, quality=8, macro_block_size=1)

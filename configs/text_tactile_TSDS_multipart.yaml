@@ -22,7 +22,6 @@ ssaa_max_scale: 2
 no_tactile: False
 no_train_tactile: False
 tactile_texture_object: GreenSweater
-tactile_texture_index: 2
 
 # configuration for positional encoding of texture field
 num_frequencies: 10
@@ -82,7 +81,6 @@ max_guidance_strength: 0.7
 # training batch size per iter
 batch_size: 1
 # training iterations for stage 2 (init and refine)
-# TODO: change the number of iterations back to the original setting after testing
 iters_refine: 200 # 200 
 iters_init: 150 # 150
 # training camera radius

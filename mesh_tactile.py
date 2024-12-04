@@ -413,7 +413,6 @@ class Mesh:
 
                 assert os.path.exists(opt.tactile_normal_path), f"tactile_normal_path {opt.tactile_normal_path} not found!"
 
-            # tactile_normal, tactile_displacement = cls.load_tactile_texture(opt=opt)
             texture_crop_ratio = opt.texture_crop_ratio if hasattr(opt, "texture_crop_ratio") else 1.0
             tactile_normal = cls.load_tactile_texture(tactile_normal_path=opt.tactile_normal_path, texture_crop_ratio=texture_crop_ratio)
             mesh.tactile_normal = torch.tensor(tactile_normal, dtype=torch.float32, device=device)
@@ -721,11 +720,9 @@ class Mesh:
         albedo_path = path.replace(".obj", "_albedo.png")
         tactile_normal_path = path.replace(".obj", "_tactile_normal.png")
         label_map_path = path.replace(".obj", "_label_map.png")
-        # tactile_displacement_path = path.replace(".obj", "_tactile_displacement.png")
 
         metallic_path = path.replace(".obj", "_metallic.png")
         roughness_path = path.replace(".obj", "_roughness.png")
-        # TODO: add metaliness and roughness texture maps, if needed
 
         v_np = self.v.detach().cpu().numpy()
         vt_np = self.vt.detach().cpu().numpy() if self.vt is not None else None

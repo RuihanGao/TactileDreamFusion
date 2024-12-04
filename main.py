@@ -65,7 +65,6 @@ class GUI:
             self.negative_prompt = self.opt.negative_prompt
 
         self.vis_modes = ["controlnet_refined_images", "controlnet_control_images", "rendered_lambertians", "rendered_albedos", "rendered_target_albedos", "rendered_perturb_normals", "rendered_target_perturb_normals", "rendered_guidance_perturb_normals", "rendered_target_perturb_normal2s", "rendered_guidance_perturb_normal2s", "rendered_albedos_patch", "rendered_target_albedos_patch", "rendered_labels", "rendered_labels_patch", "rendered_masks", "rendered_masks_patch", "seg_masks_partA", "seg_masks_partB", "seg_masks_partA_rendered", "seg_masks_partB_rendered", "seg_masks_partA_rendered_patch", "seg_masks_partB_rendered_patch"]
-        # TODO: check for step_vis_dict, how we convert rendered_masks_patch to seg_masks_partA and seg_masks_partB
         print(f"Initialized GUI, prompt: {self.prompt}, negative_prompt: {self.negative_prompt}")
 
 
@@ -106,17 +105,16 @@ class GUI:
             # Texture Dreambooth with multi-step denoising. It is used to refine rendered tactile patches.
             from guidance.tactile_guidance_utils import TextureDreambooth
             if self.opt.tactile_lora_dir is None:
-                self.opt.tactile_lora_dir = f"lora_{self.opt.tactile_texture_object.lower()}_sks_20241022"
+                self.opt.tactile_lora_dir = f"lora_{self.opt.tactile_texture_object.lower()}_sks"
             print(f"[INFO] loading TactileGuidance from lora dir {self.opt.tactile_lora_dir}")
-            tactile_lora_parent_dir = "/data/ruihan/projects/peft/examples/lora_dreambooth/output/"
-            # TODO: change the lora paths
+            tactile_lora_parent_dir = "TextureDreambooth/output/"
             self.guidance_tactile = TextureDreambooth(device=self.device, fp16=False, sd_version="1.4", lora_dir=osp.join(tactile_lora_parent_dir, self.opt.tactile_lora_dir))
             # the TextureDreambooth is trained per texture with "sks normal map" as the input text
             self.guidance_tactile.get_text_embeds(["sks normal map"], [""])
 
             if self.opt.num_part_label > 0:
                 # load a second Texture Dreambooth for multi-part texture generation
-                self.opt.tactile_lora_dir_partB = f"lora_{self.opt.texture2_name.lower()}_sks_20241022"
+                self.opt.tactile_lora_dir_partB = f"lora_{self.opt.texture2_name.lower()}_sks"
                 print(f"[INFO] loading 2nd TactileGuidance from lora dir {self.opt.tactile_lora_dir_partB}")
                 self.guidance_tactile_partB = TextureDreambooth(device=self.device, fp16=False, sd_version="1.4", lora_dir=osp.join(tactile_lora_parent_dir, self.opt.tactile_lora_dir_partB))
                 self.guidance_tactile_partB.get_text_embeds(["sks normal map"], [""])
@@ -137,15 +135,6 @@ class GUI:
 
         step_vis_dict = {k: [] for k in self.vis_modes}
 
-        # save masks for the other parts # two-part segmentation
-        seg_masks_partA_list = []
-        seg_masks_partB_list = []
-        seg_masks_partA_rendered_list = []
-        seg_masks_partB_rendered_list = []
-        seg_masks_partA_rendered_patch_list = []
-        seg_masks_partB_rendered_patch_list = []
-
-
         self.step += 1
         # compute the step_ratio to adjust the strength of guidance as the training progresses
         if self.opt.iters_refine > self.opt.iters_init: 
@@ -157,18 +146,10 @@ class GUI:
         render_resolution = 512
         poses = []
         vers, hors, radii = [], [], []
-        refined_images = None
-        controlnet_control_images = None
-        controlnet_refined_images = None
         seg_masks = None
 
         # collect all rendered views to compute texture loss
-        batch_vis_modes = ["rendered_perturb_normals",   "rendered_target_perturb_normals", "rendered_albedos", "rendered_target_albedos", "rendered_lambertians", "rendered_labels", "rendered_masks","rendered_target_albedos_patch", "rendered_albedos_patch", "rendered_labels_patch",  "rendered_masks_patch", "rendered_target_perturb_normal2s", 
-        "rendered_guidance_perturb_normals",
-            
-            
-            
-             "rendered_target_albedos",   "rendered_guidance_normals",   "rendered_shading_normal_viewspaces", "rendered_guidance_perturb_normal2s",]
+        batch_vis_modes = ["rendered_perturb_normals",   "rendered_target_perturb_normals", "rendered_albedos", "rendered_target_albedos", "rendered_lambertians", "rendered_labels", "rendered_masks", "rendered_target_albedos_patch", "rendered_albedos_patch", "rendered_labels_patch",  "rendered_masks_patch", "rendered_target_perturb_normal2s", "rendered_guidance_perturb_normals", "rendered_target_albedos",   "rendered_guidance_normals",   "rendered_shading_normal_viewspaces", "rendered_guidance_perturb_normal2s",]
         batch_vis_dict = {k: [] for k in batch_vis_modes}
     
 
@@ -309,7 +290,6 @@ class GUI:
         ##### RGB loss #####
         if iter_idx <= self.opt.iters_init:
             if self.opt.lambda_albedo_recon > 0:
-                # TODO: check whether the gradient can be propagated properly after using the dictionary to store the images
                 loss_albedo_regularization = self.opt.lambda_albedo_recon * albedo_recon_loss_func(batch_vis_dict["rendered_albedos"], batch_vis_dict["rendered_target_albedos"])
             else:
                 loss_albedo_regularization = torch.tensor(0.0).to(self.device)
@@ -392,8 +372,6 @@ class GUI:
                     loss_tactile_guidance_partA = F.mse_loss(rendered_perturb_normals_partA, tactile_guidance_refined_images_partA) * self.opt.lambda_tactile_guidance
                     batch_vis_dict["rendered_guidance_perturb_normals"] = tactile_guidance_refined_images_partA
                   
-
-                    # TODO: load another lora and render the tactile guidance for partB
                     tactile_guidance_refined_images_partB = self.guidance_tactile_partB.refine(pred_rgb=(rendered_perturb_normals_partB+1)/2, guidance_scale=self.opt.tactile_guidance_scale, steps=self.opt.tactile_guidance_multistep_steps, strength=self.opt.tactile_guidance_multistep_strength)
                     tactile_guidance_refined_images_partB = tactile_guidance_refined_images_partB * 2 - 1 # convert range from [0, 1] to [-1, 1]
                     loss_tactile_guidance_partB = F.mse_loss(rendered_perturb_normals_partB, tactile_guidance_refined_images_partB) * self.opt.lambda_tactile_guidance
@@ -472,14 +450,15 @@ class GUI:
                     step_vis_dict[vis_mode].append(F.interpolate(vis_data, (save_size, save_size), mode="bilinear", align_corners=False)) # align_corners option can only be set with the interpolating modes: linear | bilinear | bicubic | trilinear
   
 
-        if seg_masks_partA_list is not None and seg_masks is not None:
+        if self.opt.num_part_label > 0:
             # masks [2, H, W]
-            seg_masks_partA_list.append(F.interpolate(partA_mask.detach(), (save_size, save_size), mode="bilinear"))
-            seg_masks_partB_list.append(F.interpolate(partB_mask.detach(), (save_size, save_size), mode="bilinear"))
-            seg_masks_partA_rendered_list.append(F.interpolate(partA_mask_rendered.detach(), (save_size, save_size), mode="bilinear"))
-            seg_masks_partB_rendered_list.append(F.interpolate(partB_mask_rendered.detach(), (save_size, save_size), mode="bilinear"))
-            seg_masks_partA_rendered_patch_list.append(F.interpolate(partA_mask_patch_rendered.detach()[0].unsqueeze(0), (save_size, save_size), mode="bilinear"))
-            seg_masks_partB_rendered_patch_list.append(F.interpolate(partB_mask_patch_rendered.detach()[0].unsqueeze(0), (save_size, save_size), mode="bilinear"))
+            step_vis_dict["seg_masks_partA"].append(F.interpolate(partA_mask.detach(), (save_size, save_size), mode="bilinear"))
+            step_vis_dict["seg_masks_partB"].append(F.interpolate(partB_mask.detach(), (save_size, save_size), mode="bilinear"))
+            step_vis_dict["seg_masks_partA_rendered"].append(F.interpolate(partA_mask_rendered.detach(), (save_size, save_size), mode="bilinear"))
+            step_vis_dict["seg_masks_partB_rendered"].append(F.interpolate(partB_mask_rendered.detach(), (save_size, save_size), mode="bilinear"))
+            step_vis_dict["seg_masks_partA_rendered_patch"].append(F.interpolate(partA_mask_patch_rendered.detach(), (save_size, save_size), mode="bilinear"))
+            step_vis_dict["seg_masks_partB_rendered_patch"].append(F.interpolate(partB_mask_patch_rendered.detach(), (save_size, save_size), mode="bilinear"))
+
         
         # optimization
         loss.backward()
@@ -717,12 +696,12 @@ if __name__ == "__main__":
     else:
         opt.load_tactile = True
         # parse the tacitle texture path
-        opt.tactile_normal_path = os.path.join("./data/tactile_textures", f"{opt.tactile_texture_object}_tactile_texture_map_{opt.tactile_texture_index}_normal.png") 
+        opt.tactile_normal_path = os.path.join("./data/tactile_textures", f"{opt.tactile_texture_object}_tactile_texture_map_2_normal.png") 
         print(f"Tactile texture path: {opt.tactile_normal_path}")
         # add the second tactile texture path for multi-parts
         if opt.num_part_label > 0:
             assert opt.num_part_label == 2, f"Unsupported number of part label {opt.num_part_label}"
-            opt.tactile_normal_path2 = os.path.join("./data/tactile_textures", f"{opt.texture2_name}_tactile_texture_map_{opt.tactile_texture_index}_normal.png")
+            opt.tactile_normal_path2 = os.path.join("./data/tactile_textures", f"{opt.texture2_name}_tactile_texture_map_2_normal.png")
             print(f"Tactile texture path 2: {opt.tactile_normal_path2}")
     
     # auto find mesh from stage 1

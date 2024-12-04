@@ -22,7 +22,6 @@ ssaa_max_scale: 2
 no_tactile: False
 no_train_tactile: False
 tactile_texture_object: GreenSweater
-tactile_texture_index: 2
 
 # configuration for positional encoding of texture field
 num_frequencies: 10

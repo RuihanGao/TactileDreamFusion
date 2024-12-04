@@ -12,4 +12,6 @@ logs*
 *.mp4
 data/*
 !data/tactile_textures
-!data/exp_meshes
+TextureDreambooth/data/
+TextureDreambooth/logs/
+TextureDreambooth/output/
