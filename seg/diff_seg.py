@@ -185,6 +185,7 @@ def seg_attn(self_attn_list, cross_attn_list, token_indices, fg_mask=None):
     Args:
     fg_mask: [H, W]
     """
+
     cross_attn_aggre = aggregate_x_weights(weight_list=cross_attn_list, weight_ratio=[1.0 for x in cross_attn_list], device=cross_attn_list[0].device) # 512x512x77
     self_attn_aggre = aggregate_weights(weight_list=self_attn_list, device=self_attn_list[0].device)
 
@@ -200,7 +201,7 @@ def seg_attn(self_attn_list, cross_attn_list, token_indices, fg_mask=None):
 
     # Non-Maximum Suppression
     label_maps = torch.argmax(attns_merged, dim=0).reshape(512, 512)
-
+    # associate each mask with a label
     index_to_labels = get_semantics(label_maps, cross_attn_aggre[..., token_indices], voting='mean')
 
     masks = []

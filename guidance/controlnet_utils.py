@@ -229,9 +229,13 @@ class ControlNet(nn.Module):
                         if "Cross" in module_name or "cross" in module_name:
                             for i, layer in enumerate(module.attentions):
                                 attn_name = f"{name}_{i}"
+                                print(f"check attn name: {attn_name}")
                                 # offload to avoid OOM
-                                cross_attn[t.item()][attn_name] = layer.transformer_blocks[0].attn2.attn_probs.detach()
-                                self_attn[t.item()][attn_name] = layer.transformer_blocks[0].attn1.attn_probs.detach()
+                                cross_attn[t.item()][attn_name] = layer.transformer_blocks[0].attn2.attn_probs.detach() # [16, 4096, 77]
+                                self_attn[t.item()][attn_name] = layer.transformer_blocks[0].attn1.attn_probs.detach() # [16, 4096, 4096]
+                                print(f"check cross attn shape: {cross_attn[t.item()][attn_name].shape}") # [16, 4096, 77]
+                                print(f"check self attn shape: {self_attn[t.item()][attn_name].shape}") # [16, 4096, 4096]
+                                
 
         imgs = self.decode_latents(latents) # [1, 3, 512, 512]
         if return_attn:
