@@ -9,7 +9,6 @@ import torch.nn.functional as F
 import rembg
 import json
 import os.path as osp
-import torchvision
 
 import argparse
 from omegaconf import OmegaConf
@@ -452,12 +451,12 @@ class GUI:
 
         if self.opt.num_part_label > 0:
             # masks [2, H, W]
-            step_vis_dict["seg_masks_partA"].append(F.interpolate(partA_mask.detach(), (save_size, save_size), mode="bilinear"))
-            step_vis_dict["seg_masks_partB"].append(F.interpolate(partB_mask.detach(), (save_size, save_size), mode="bilinear"))
-            step_vis_dict["seg_masks_partA_rendered"].append(F.interpolate(partA_mask_rendered.detach(), (save_size, save_size), mode="bilinear"))
-            step_vis_dict["seg_masks_partB_rendered"].append(F.interpolate(partB_mask_rendered.detach(), (save_size, save_size), mode="bilinear"))
-            step_vis_dict["seg_masks_partA_rendered_patch"].append(F.interpolate(partA_mask_patch_rendered.detach(), (save_size, save_size), mode="bilinear"))
-            step_vis_dict["seg_masks_partB_rendered_patch"].append(F.interpolate(partB_mask_patch_rendered.detach(), (save_size, save_size), mode="bilinear"))
+            step_vis_dict["seg_masks_partA"].append(F.interpolate(partA_mask.detach()[0].unsqueeze(0), (save_size, save_size), mode="bilinear"))
+            step_vis_dict["seg_masks_partB"].append(F.interpolate(partB_mask.detach()[0].unsqueeze(0), (save_size, save_size), mode="bilinear"))
+            step_vis_dict["seg_masks_partA_rendered"].append(F.interpolate(partA_mask_rendered.detach()[0].unsqueeze(0), (save_size, save_size), mode="bilinear"))
+            step_vis_dict["seg_masks_partB_rendered"].append(F.interpolate(partB_mask_rendered.detach()[0].unsqueeze(0), (save_size, save_size), mode="bilinear"))
+            step_vis_dict["seg_masks_partA_rendered_patch"].append(F.interpolate(partA_mask_patch_rendered.detach()[0].unsqueeze(0), (save_size, save_size), mode="bilinear"))
+            step_vis_dict["seg_masks_partB_rendered_patch"].append(F.interpolate(partB_mask_patch_rendered.detach()[0].unsqueeze(0), (save_size, save_size), mode="bilinear"))
 
         
         # optimization

@@ -23,7 +23,7 @@ if $is_train; then
     CUDA_VISIBLE_DEVICES=0 python main.py \
         --config configs/text_tactile_TSDS_multipart.yaml \
         save_path=${mesh_obj}_${texture}_${texture2_name}${postfix} \
-        mesh=logs/${mesh_obj}/${mesh_obj}_mesh.obj \
+        mesh=data/base_meshes/${mesh_obj}/${mesh_obj}_mesh.obj \
         tactile_texture_object=${texture} \
         texture2_name=${texture2_name}
 else

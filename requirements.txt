@@ -1,0 +1,17 @@
+huggingface_hub
+hf_transfer
+opencv-python
+rembg[gpu,cli]
+nvdiffrast @ git+https://github.com/NVlabs/nvdiffrast.git@v0.3.1
+trimesh
+lpips
+tinycudann @ git+https://github.com/NVlabs/tiny-cuda-nn/#subdirectory=bindings/torch
+diffusers==0.27.0 # NOTE: manually remove `cached_download` from `envs/TDF/lib/python3.10/site-packages/diffusers/utils/dynamic_modules_utils.py` to avoid error. Ref: https://github.com/easydiffusion/easydiffusion/issues/1851
+controlnet_aux==0.0.3
+transformers==4.38.2
+accelerate==1.1.1
+peft==0.13.2
+matplotlib==3.8.3
+imageio==2.34.0
+imageio-ffmpeg==0.5.1
+bpy==4.0.0

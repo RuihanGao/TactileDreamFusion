@@ -13,7 +13,7 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 # Common variables
-mesh_obj="an_avocado"
+mesh_obj="an_avocado_2"
 texture="avocado"
 postfix="_example"
 
@@ -22,7 +22,7 @@ if $is_train; then
     CUDA_VISIBLE_DEVICES=0 python main.py \
         --config configs/text_tactile_TSDS.yaml \
         save_path=${mesh_obj}_${texture}${postfix} \
-        mesh=logs/${mesh_obj}/${mesh_obj}_mesh.obj \
+        mesh=data/base_meshes/${mesh_obj}/${mesh_obj}_mesh.obj \
         tactile_texture_object=${texture}
 else
     echo "Running in testing mode..."

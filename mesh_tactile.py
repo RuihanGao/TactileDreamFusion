@@ -776,7 +776,6 @@ class Mesh:
             cv2.imwrite(albedo_path, cv2.cvtColor(albedo, cv2.COLOR_RGB2BGR))
         if self.tactile_normal is not None:
             print(f"Saving tactile_normal to {tactile_normal_path}")
-            # pdb.set_trace()
             tactile_normal = self.tactile_normal.detach().cpu().numpy()
             print(f"Saving tactile_normal to {tactile_normal_path}, current range: [{tactile_normal.min()}, {tactile_normal.max()}], dtype {tactile_normal.dtype}, shape {tactile_normal.shape}")
             # normalize to unit length
