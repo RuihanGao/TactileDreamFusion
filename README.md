@@ -1,10 +1,13 @@
 # TactileDreamFusion
 
-[**Project**](https://ruihangao.github.io/TactileDreamFusion/) | [**Paper**]()
-
+<a href="https://arxiv.org/abs/2412.06785"><img src="https://img.shields.io/badge/arXiv-2412.06785-b31b1b.svg" height=22.5></a>
+<a href='https://ruihangao.github.io/TactileDreamFusion/'><img src='https://img.shields.io/badge/Website-TactileDreamFusion-green?logo=github' height=22.5></a>
+<a href='https://huggingface.co/datasets/Ruihan28/TactileDreamFusion'><img src='https://img.shields.io/badge/%F0%9F%A4%97%20HuggingFace-Data-blue' height=22.5></a>
+<a href='https://huggingface.co/Ruihan28/TactileDreamFusion'><img src='https://img.shields.io/badge/%F0%9F%A4%97%20HuggingFace-Model-blue' height=22.5></a>
+<a href='https://ruihangao.github.io/TactileDreamFusion/'><img src='https://img.shields.io/badge/Blender-rendertoolkit-1?logo=blender' height=22.5></a>
+<a href="https://github.com/RuihanGao/TactileDreamFusion?tab=MIT-1-ov-file#"><img src="https://img.shields.io/badge/license-MIT-blue.svg" height=22.5></a>
 
 https://github.com/user-attachments/assets/400db33f-2843-4201-ae1b-a1434700b4ff
-
 
 > **3D content creation with touch**: TactileDreamFusion integrates high-resolution tactile sensing with diffusion-based image priors to enhance fine geometric details for text- or image-to-3D generation. The following results are rendered using Blender, with full-color rendering on the top and normal rendering at the bottom.
 
@@ -42,7 +45,9 @@ https://github.com/user-attachments/assets/e9ce2bbb-1b60-4b0d-993a-2b55152e360a
 ## Getting Started
 
 ### Environment setup
+
 Our environment has been tested on linux, python 3.10.13, pytorch 2.2.1, and CUDA 12.1.
+
 ```
 git clone https://github.com/RuihanGao/TactileDreamFusion.git
 cd TactileDreamFusion
@@ -56,53 +61,58 @@ git checkout tactileDreamfusion
 
 ```
 
-
-
 ### Download dataset and TextureDreamBooth weights
-* Run the following script to download our tactile texture dataset and example base meshes to `data` folder.
+
+- Run the following script to download our tactile texture dataset and example base meshes to `data` folder.
+
 ```
-bash scripts/download_hf_dataset.sh 
+bash scripts/download_hf_dataset.sh
 ```
 
-* Run the following script to download our pretrained TextureDreamBooth weights and patch data to `TextureDreambooth` folder.
+- Run the following script to download our pretrained TextureDreamBooth weights and patch data to `TextureDreambooth` folder.
+
 ```
-bash scripts/download_hf_model.sh 
+bash scripts/download_hf_model.sh
 ```
 
 ### Single texture generation
 
-* Training
+- Training
 
 ```
 bash scripts/single_texture_generation.sh -train
 ```
+
 It takes about 10 mins on a single A6000 gpu to run single texture generation for a mesh.
 
-* Visualization (nvdiffrast)
+- Visualization (nvdiffrast)
 
 ```
 bash scripts/single_texture_generation.sh
 ```
 
-* Visualization (blender)
-Note: After training, visualize different output meshes in `logs` directory by changing `mesh_objs` list in each bash script.
+- Visualization (blender)
+  Note: After training, visualize different output meshes in `logs` directory by changing `mesh_objs` list in each bash script.
+
 ```
 cd blender-render-toolkit
 bash scripts/batch_blender_albedo.sh
-bash scripts/batch_blender_normal.sh 
+bash scripts/batch_blender_normal.sh
 bash scripts/batch_blender.sh
 ```
 
 ### Multi-part texture generation
 
-* Training
+- Training
 
 ```
 bash scripts/multi_part_texture_generation.sh -train
 ```
+
 It takes about 15 mins on a single A6000 gpu to run multi-part texture generation for a mesh.
 
-* Visualization (nvdiffrast)
+- Visualization (nvdiffrast)
+
 ```
 bash scripts/multi_part_texture_generation.sh
 ```
