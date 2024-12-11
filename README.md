@@ -4,7 +4,7 @@
 <a href='https://ruihangao.github.io/TactileDreamFusion/'><img src='https://img.shields.io/badge/Website-TactileDreamFusion-green?logo=github'></a>
 <a href='https://huggingface.co/datasets/Ruihan28/TactileDreamFusion'><img src='https://img.shields.io/badge/%F0%9F%A4%97%20HuggingFace-Data-blue'></a>
 <a href='https://huggingface.co/Ruihan28/TactileDreamFusion'><img src='https://img.shields.io/badge/%F0%9F%A4%97%20HuggingFace-Model-blue'></a>
-<a href='https://ruihangao.github.io/TactileDreamFusion/'><img src='https://img.shields.io/badge/Blender-rendertoolkit-1?logo=blender'></a>
+<a href='https://github.com/dunbar12138/blender-render-toolkit/tree/main'><img src='https://img.shields.io/badge/Blender-rendertoolkit-1?logo=blender'></a>
 <a href="https://github.com/RuihanGao/TactileDreamFusion?tab=MIT-1-ov-file#"><img src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
 
 https://github.com/user-attachments/assets/400db33f-2843-4201-ae1b-a1434700b4ff
