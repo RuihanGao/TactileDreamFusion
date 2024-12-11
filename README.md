@@ -119,6 +119,19 @@ It takes about 15 mins on a single A6000 gpu to run multi-part texture generatio
 bash scripts/multi_part_texture_generation.sh
 ```
 
+## Citation
+
+If you find this repository useful for your research, please cite the following work.
+
+```
+@inproceedings{gao2024exploiting,
+      title     = {Tactile DreamFusion: Exploiting Tactile Sensing for 3D Generation},
+      author    = {Gao, Ruihan and Deng, Kangle and Yang, Gengshan and Yuan, Wenzhen and Zhu, Jun-Yan},
+      booktitle = {Conference on Neural Information Processing Systems (NeurIPS)},
+      year      = {2024},
+}
+```
+
 ## Acknowlegements
 
 We thank Sheng-Yu Wang, Nupur Kumari, Gaurav Parmar, Hung-Jui Huang, and Maxwell Jones for their helpful comments and discussion. We are also grateful to Arpit Agrawal and Sean Liu for proofreading the draft. Kangle Deng is supported by the Microsoft research Ph.D. fellowship. Ruihan Gao is supported by the A\*STAR National Science Scholarship (Ph.D.).
