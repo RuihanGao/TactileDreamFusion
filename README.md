@@ -1,10 +1,9 @@
 # TactileDreamFusion
 
 <a href="https://arxiv.org/abs/2412.06785"><img src="https://img.shields.io/badge/arXiv-2412.06785-b31b1b.svg"></a>
-<a href='https://ruihangao.github.io/TactileDreamFusion/'><img src='https://img.shields.io/badge/Website-TactileDreamFusion-green?logo=github'></a>
+<a href='https://ruihangao.github.io/TactileDreamFusion/'><img src='https://img.shields.io/badge/Project_Page-gray?logo=github'></a>
 <a href='https://huggingface.co/datasets/Ruihan28/TactileDreamFusion'><img src='https://img.shields.io/badge/%F0%9F%A4%97%20HuggingFace-Data-blue'></a>
-<a href='https://huggingface.co/Ruihan28/TactileDreamFusion'><img src='https://img.shields.io/badge/%F0%9F%A4%97%20HuggingFace-Model-blue'></a>
-<a href='https://github.com/dunbar12138/blender-render-toolkit/tree/main'><img src='https://img.shields.io/badge/Blender-rendertoolkit-1?logo=blender'></a>
+<a href='https://github.com/dunbar12138/blender-render-toolkit/tree/main'><img src='https://img.shields.io/badge/Blender-render_toolkit-1?logo=blender'></a>
 <a href="https://github.com/RuihanGao/TactileDreamFusion?tab=MIT-1-ov-file#"><img src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
 
 [**Project**](https://ruihangao.github.io/TactileDreamFusion/) | [**Paper**](https://arxiv.org/abs/2412.06785)
