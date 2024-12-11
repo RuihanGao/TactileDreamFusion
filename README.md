@@ -7,6 +7,8 @@
 <a href='https://github.com/dunbar12138/blender-render-toolkit/tree/main'><img src='https://img.shields.io/badge/Blender-rendertoolkit-1?logo=blender'></a>
 <a href="https://github.com/RuihanGao/TactileDreamFusion?tab=MIT-1-ov-file#"><img src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
 
+[**Project**](https://ruihangao.github.io/TactileDreamFusion/) | [**Paper**](https://arxiv.org/abs/2412.06785)
+
 https://github.com/user-attachments/assets/400db33f-2843-4201-ae1b-a1434700b4ff
 
 > **3D content creation with touch**: TactileDreamFusion integrates high-resolution tactile sensing with diffusion-based image priors to enhance fine geometric details for text- or image-to-3D generation. The following results are rendered using Blender, with full-color rendering on the top and normal rendering at the bottom.
