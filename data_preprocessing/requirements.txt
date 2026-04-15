@@ -1,0 +1,5 @@
+# Python >= 3.8 required
+# Tested with Python 3.10.13 on Linux
+numpy>=1.20
+opencv-python>=4.5
+matplotlib>=3.5

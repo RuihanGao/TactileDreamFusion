@@ -10,6 +10,7 @@ venv_*/
 tmp_*
 *logs*
 *.mp4
+!assets/imgs/*.mp4
 data/*
 TextureDreambooth/data/
 TextureDreambooth/output/
